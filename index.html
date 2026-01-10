@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>emibytes | Task Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Quill Snow Theme CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        
+        /* Customizing Quill for emibytes brand */
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            border-color: #e5e7eb;
+            background: #f9fafb;
+        }
+        .dark .ql-toolbar.ql-snow {
+            border-color: #374151;
+            background: #1f2937;
+        }
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            border-color: #e5e7eb;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            /* IMPORTANTE: Altura máxima para no romper el layout */
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .dark .ql-container.ql-snow {
+            border-color: #374151;
+            background: #2d2d2d;
+            color: #f3f4f6;
+        }
+        .ql-editor {
+            min-height: 100px;
+        }
+        .ql-snow.ql-toolbar button:hover .ql-stroke,
+        .ql-snow.ql-toolbar button.ql-active .ql-stroke {
+            stroke: #138b52 !important;
+        }
+        .ql-snow.ql-toolbar button:hover .ql-fill,
+        .ql-snow.ql-toolbar button.ql-active .ql-fill {
+            fill: #138b52 !important;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emibytes: {
+                            primary: '#138b52',
+                            secondary: '#333333',
+                            tertiary: '#ffffff',
+                            background: '#f8fafc',
+                            'dark-bg': '#1a1a1a',
+                            'dark-card': '#2d2d2d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "sweetalert2": "https://esm.sh/sweetalert2@11",
+    "react-quill": "https://esm.sh/react-quill-new@3.3.3?deps=react@19.2.3,react-dom@19.2.3"
+  }
+}
+</script>
+</head>
+<body class="bg-emibytes-background dark:bg-emibytes-dark-bg text-emibytes-secondary dark:text-gray-100 min-h-screen">
+    <div id="root"></div>
+</body>
+</html>

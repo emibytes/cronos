@@ -1,0 +1,7 @@
+{
+  "name": "emibytes - cronos",
+  "description": "Cronos: El arte de dominar el tiempo.\n\nEn la antigua Grecia, Cronos representaba el paso ineludible del tiempo. En emibytes, hemos redefinido ese concepto para poner el control en tus manos. Cronos no es solo un gestor de tareas; es un sistema de precisión diseñado para orquestar cada minuto de tu operación.\n\nTransforma la presión de los plazos en una estructura fluida y organizada. Con Cronos, tu equipo no corre contra el reloj, sino que avanza en sincronía con él. Ordena el caos, cumple tus plazos y convierte el tiempo en tu activo más valioso.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
