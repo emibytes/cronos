@@ -136,6 +136,7 @@ Custom styling in `index.html` (`.ql-toolbar`, `.ql-container`) - max-height 180
 - **No backend**: Fully client-side, localStorage only
 - **No authentication**: Single-user app
 - **No external APIs**: Except CDN dependencies (esm.sh, Tailwind CDN, Google Fonts)
+- **PWA Support**: Installable as desktop/mobile app via Service Worker (`public/sw.js`) and manifest (`public/manifest.json`)
 
 ## When Adding Features
 
