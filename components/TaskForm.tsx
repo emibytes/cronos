@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Send, Search, UserPlus, AlertCircle, ClipboardList } from 'lucide-react';
-import ReactQuill from 'react-quill';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import { Attachment } from '../types';
 import { taskService } from '../services/taskService';
 
@@ -88,7 +89,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
           <div className="flex items-center gap-3 px-2">
             {!logoError ? (
               <img 
-                src="input_file_2.png" 
+                src="/logo-preloader.png" 
                 alt="emibytes" 
                 onError={() => setLogoError(true)}
                 className="w-8 h-8 object-contain brightness-0 invert" 

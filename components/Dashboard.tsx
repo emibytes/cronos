@@ -175,7 +175,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, allTasksCount, onTaskClick
 const StatCard = ({ title, value, icon, color }: { title: string; value: number; icon: React.ReactNode; color: string }) => (
   <div className="relative bg-white dark:bg-emibytes-dark-card p-6 rounded-[32px] shadow-lg border border-gray-100 dark:border-gray-800 flex items-center space-x-5 hover:shadow-2xl transition-all group overflow-hidden">
     {/* Watermark Logo */}
-    <img src="input_file_2.png" className="absolute -right-4 -bottom-4 w-24 h-24 opacity-[0.03] group-hover:scale-125 transition-transform" alt="" />
+    <img src="/logo-96x96.png" className="absolute -right-4 w-24 h-24 opacity-[0.03] group-hover:scale-125 transition-transform" alt="" />
     
     <div className={`p-4 rounded-2xl ${color} flex items-center justify-center shadow-inner`}>
       {icon}

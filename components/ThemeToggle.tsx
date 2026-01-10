@@ -7,8 +7,11 @@ const ThemeToggle: React.FC = () => {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    const initialColorValue = root.classList.contains('dark') || 
-      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const savedTheme = localStorage.getItem('theme');
+    
+    // Priorizar el tema guardado, luego preferencia del sistema
+    const initialColorValue = savedTheme === 'dark' || 
+      (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
     setIsDark(initialColorValue);
     if (initialColorValue) {

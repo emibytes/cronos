@@ -9,12 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "recharts": "^3.6.0",
-    "react-dom": "^19.2.3",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
-    "sweetalert2": "11",
-    "react-quill": "3.3.3"
+    "react-dom": "^19.2.3",
+    "react-quill-new": "^3.7.0",
+    "recharts": "^3.6.0",
+    "sweetalert2": "11"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
