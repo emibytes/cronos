@@ -2,13 +2,13 @@ const CACHE_NAME = 'cronos-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/logo.png',
-  '/logo-dark.png',
-  '/logo-white.png',
-  '/logo-preloader.png',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/favicon.ico'
+  '/public/logo.png',
+  '/public/logo-dark.png',
+  '/public/logo-white.png',
+  '/public/logo-preloader.png',
+  '/public/icon-192.png',
+  '/public/icon-512.png',
+  '/public/favicon.ico'
 ];
 
 // Instalación del Service Worker

@@ -203,7 +203,7 @@ const App: React.FC = () => {
           >
             {!logoError ? (
               <img
-                src="input_file_3.png"
+                src="logo.png"
                 className="w-10 h-10 object-contain"
                 alt="Add"
                 onError={() => setLogoError(true)}
