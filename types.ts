@@ -13,6 +13,7 @@ export interface Task {
   id: string;
   title: string;
   responsible: string;
+  project: string;
   observations: string;
   status: TaskStatus;
   createdAt: number;

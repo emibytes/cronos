@@ -4,8 +4,10 @@ import { Task, TaskStatus } from '../types';
 // CLAVES ESTABLES - NO CAMBIAR PARA PRESERVAR DATOS
 const STORAGE_KEY = 'emibytes_task_storage_v1';
 const RESP_STORAGE_KEY = 'emibytes_responsible_storage_v1';
+const PROJECT_STORAGE_KEY = 'emibytes_project_storage_v1';
 
 const DEFAULT_RESPONSIBLES = ["Eminson Mendoza", "Jessica Ahumada Rios"];
+const DEFAULT_PROJECTS = ["General", "Desarrollo", "Marketing"];
 
 const generateId = () => {
   if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
@@ -21,7 +23,20 @@ export const taskService = {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) return [];
       const parsed = JSON.parse(stored);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      
+      // Migración: agregar campo project a tareas antiguas
+      const migrated = parsed.map(task => ({
+        ...task,
+        project: task.project || 'General' // Default para tareas sin proyecto
+      }));
+      
+      // Guardar migración si hubo cambios
+      if (migrated.some((t, i) => !parsed[i].project)) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      }
+      
+      return migrated;
     } catch (error) {
       console.error('Error al cargar tareas de localStorage:', error);
       return [];
@@ -47,6 +62,7 @@ export const taskService = {
     const updatedTasks = [newTask, ...currentTasks];
     taskService.saveTasks(updatedTasks);
     taskService.addResponsible(taskData.responsible);
+    taskService.addProject(taskData.project);
     return newTask;
   },
 
@@ -87,6 +103,28 @@ export const taskService = {
     if (!current.some(r => r.toLowerCase() === trimmedName.toLowerCase())) {
       const updated = [...current, trimmedName].sort();
       localStorage.setItem(RESP_STORAGE_KEY, JSON.stringify(updated));
+    }
+  },
+
+  // --- Proyectos ---
+  getProjects: (): string[] => {
+    try {
+      const stored = localStorage.getItem(PROJECT_STORAGE_KEY);
+      if (!stored) return DEFAULT_PROJECTS;
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : DEFAULT_PROJECTS;
+    } catch (error) {
+      return DEFAULT_PROJECTS;
+    }
+  },
+
+  addProject: (name: string): void => {
+    if (!name || !name.trim()) return;
+    const trimmedName = name.trim();
+    const current = taskService.getProjects();
+    if (!current.some(p => p.toLowerCase() === trimmedName.toLowerCase())) {
+      const updated = [...current, trimmedName].sort();
+      localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(updated));
     }
   }
 };

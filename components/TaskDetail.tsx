@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 // Added ClipboardList to imports
-import { X, User, Calendar, Save, Trash2, CheckCircle2, ClipboardList } from 'lucide-react';
+import { X, User, Calendar, Save, Trash2, CheckCircle2, ClipboardList, FolderOpen } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Task, TaskStatus } from '../types';
@@ -129,6 +129,16 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                   </div>
 
                   <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-md">
+                      <FolderOpen size={18} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-gray-400 font-black uppercase">Proyecto</p>
+                      <p className="text-sm font-bold">{task.project}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center text-gray-500">
                       <Calendar size={18} />
                     </div>
@@ -206,6 +216,16 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                 <div>
                   <p className="text-[9px] text-gray-400 font-black uppercase">Responsable</p>
                   <p className="text-sm font-bold">{task.responsible}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-md">
+                  <FolderOpen size={18} />
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 font-black uppercase">Proyecto</p>
+                  <p className="text-sm font-bold">{task.project}</p>
                 </div>
               </div>
 

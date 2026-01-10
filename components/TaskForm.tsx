@@ -8,12 +8,13 @@ import { taskService } from '../services/taskService';
 
 interface TaskFormProps {
   onClose: () => void;
-  onSubmit: (task: { title: string; responsible: string; observations: string; attachments: Attachment[] }) => void;
+  onSubmit: (task: { title: string; responsible: string; project: string; observations: string; attachments: Attachment[] }) => void;
 }
 
 interface FormErrors {
   title?: string;
   responsible?: string;
+  project?: string;
   observations?: string;
 }
 
@@ -28,20 +29,28 @@ const modules = {
 const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   const [title, setTitle] = useState('');
   const [responsible, setResponsible] = useState('');
+  const [project, setProject] = useState('');
   const [observations, setObservations] = useState('');
   const [attachments] = useState<Attachment[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [logoError, setLogoError] = useState(false);
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false);
   const [availableResponsibles, setAvailableResponsibles] = useState<string[]>([]);
+  const [availableProjects, setAvailableProjects] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const projectDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setAvailableResponsibles(taskService.getResponsibles());
+    setAvailableProjects(taskService.getProjects());
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
+      }
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target as Node)) {
+        setIsProjectMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -59,10 +68,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
     return availableResponsibles.some(r => r.toLowerCase() === responsible.toLowerCase());
   }, [responsible, availableResponsibles]);
 
+  const filteredProjects = useMemo(() => {
+    if (!project) return availableProjects;
+    return availableProjects.filter(p => 
+      p.toLowerCase().includes(project.toLowerCase())
+    );
+  }, [project, availableProjects]);
+
+  const exactProjectMatch = useMemo(() => {
+    return availableProjects.some(p => p.toLowerCase() === project.toLowerCase());
+  }, [project, availableProjects]);
+
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!title.trim()) newErrors.title = 'El título es obligatorio';
     if (!responsible.trim()) newErrors.responsible = 'El responsable es obligatorio';
+    if (!project.trim()) newErrors.project = 'El proyecto es obligatorio';
     if (!observations.trim() || observations === '<p><br></p>') newErrors.observations = 'Las observaciones son obligatorias';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,6 +95,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
       onSubmit({
         title,
         responsible,
+        project,
         observations,
         attachments
       });
@@ -172,6 +194,60 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
                     >
                       <UserPlus size={14} />
                       <span>Nuevo: "{responsible}"</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 relative md:col-span-2" ref={projectDropdownRef}>
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                Proyecto <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  autoComplete="off"
+                  type="text"
+                  value={project}
+                  onFocus={() => setIsProjectMenuOpen(true)}
+                  onChange={(e) => {
+                    setProject(e.target.value);
+                    setIsProjectMenuOpen(true);
+                    if (errors.project) setErrors(prev => ({ ...prev, project: undefined }));
+                  }}
+                  placeholder="Seleccionar proyecto..."
+                  className={`w-full px-4 py-3 rounded-xl border ${errors.project ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'} focus:ring-2 focus:ring-emibytes-primary focus:border-transparent outline-none transition-all font-semibold`}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <Search size={18} />
+                </div>
+              </div>
+              {errors.project && <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 uppercase"><AlertCircle size={12} /> {errors.project}</p>}
+
+              {isProjectMenuOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                  {filteredProjects.map((p, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setProject(p);
+                        setIsProjectMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm flex items-center space-x-2 transition-colors font-bold"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emibytes-primary"></span>
+                      <span>{p}</span>
+                    </button>
+                  ))}
+                  {project && !exactProjectMatch && (
+                    <button
+                      type="button"
+                      onClick={() => setIsProjectMenuOpen(false)}
+                      className="w-full text-left px-4 py-3 bg-emibytes-primary/5 dark:bg-emibytes-primary/10 hover:bg-emibytes-primary/10 text-emibytes-primary text-xs font-black flex items-center space-x-2 transition-colors border-t border-emibytes-primary/10 uppercase"
+                    >
+                      <UserPlus size={14} />
+                      <span>Nuevo: "{project}"</span>
                     </button>
                   )}
                 </div>

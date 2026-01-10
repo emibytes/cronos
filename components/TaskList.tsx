@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Task, TaskStatus } from '../types';
-import { Clock, Trash2, FileIcon, User, ExternalLink } from 'lucide-react';
+import { Clock, Trash2, FileIcon, User, ExternalLink, FolderOpen } from 'lucide-react';
 
 interface TaskListProps {
   tasks: Task[];
@@ -77,6 +77,10 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onDelete, onTaskClick }) => 
                 <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium">
                   <User size={12} className="text-emibytes-primary" />
                   <span>{task.responsible}</span>
+                </div>
+                <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-emibytes-primary/10 dark:bg-emibytes-primary/20 rounded-full text-xs font-medium text-emibytes-primary">
+                  <FolderOpen size={12} />
+                  <span>{task.project}</span>
                 </div>
                 {task.attachments.length > 0 && (
                   <div className="flex items-center space-x-1 text-xs text-gray-400">

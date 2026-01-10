@@ -34,7 +34,7 @@ const App: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  const handleAddTask = useCallback((taskData: { title: string; responsible: string; observations: string; attachments: any[] }) => {
+  const handleAddTask = useCallback((taskData: { title: string; responsible: string; project: string; observations: string; attachments: any[] }) => {
     taskService.addTask(taskData);
     setTasks(taskService.getTasks());
   }, []);
@@ -92,7 +92,8 @@ const App: React.FC = () => {
 
   const filteredTasks = tasks.filter(t =>
     t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.responsible.toLowerCase().includes(searchTerm.toLowerCase())
+    t.responsible.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.project && t.project.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (

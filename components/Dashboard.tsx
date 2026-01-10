@@ -2,7 +2,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Task } from '../types';
-import { CheckCircle, Clock, ListTodo, Search, ArrowRight } from 'lucide-react';
+import { CheckCircle, Clock, ListTodo, Search, ArrowRight, FolderOpen } from 'lucide-react';
 import { StatusBadge } from './TaskList';
 
 interface DashboardProps {
@@ -154,6 +154,10 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, allTasksCount, onTaskClick
                   <div className="flex items-center gap-3 mt-2">
                     <StatusBadge status={task.status} />
                     <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">@{task.responsible}</span>
+                    <div className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-emibytes-primary/10 text-emibytes-primary rounded-full">
+                      <FolderOpen size={10} />
+                      <span>{task.project}</span>
+                    </div>
                   </div>
                 </div>
               </div>
