@@ -5,7 +5,7 @@ import { Task, TaskStatus } from '../types';
 const STORAGE_KEY = 'emibytes_task_storage_v1';
 const RESP_STORAGE_KEY = 'emibytes_responsible_storage_v1';
 
-const DEFAULT_RESPONSIBLES = ["Emiliano", "Laura", "Carlos", "Soporte TI", "Administración"];
+const DEFAULT_RESPONSIBLES = ["Eminson Mendoza", "Jessica Ahumada Rios"];
 
 const generateId = () => {
   if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
