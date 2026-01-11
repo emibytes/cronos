@@ -8,7 +8,7 @@ import { taskService } from '../services/taskService';
 
 interface TaskFormProps {
   onClose: () => void;
-  onSubmit: (task: { title: string; responsible: string; project: string; observations: string; attachments: Attachment[] }) => void;
+  onSubmit: (task: { title: string; responsible: string; project: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
 }
 
 interface FormErrors {
@@ -27,10 +27,14 @@ const modules = {
 };
 
 const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
+  const todayString = new Date().toISOString().split('T')[0];
+  
   const [title, setTitle] = useState('');
   const [responsible, setResponsible] = useState('');
   const [project, setProject] = useState('');
   const [observations, setObservations] = useState('');
+  const [startDate, setStartDate] = useState<string>(todayString);
+  const [endDate, setEndDate] = useState<string>(todayString);
   const [attachments] = useState<Attachment[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [logoError, setLogoError] = useState(false);
@@ -82,7 +86,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!title.trim()) newErrors.title = 'El título es obligatorio';
-    if (!responsible.trim()) newErrors.responsible = 'El responsable es obligatorio';
     if (!project.trim()) newErrors.project = 'El proyecto es obligatorio';
     if (!observations.trim() || observations === '<p><br></p>') newErrors.observations = 'Las observaciones son obligatorias';
     setErrors(newErrors);
@@ -97,7 +100,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
         responsible,
         project,
         observations,
-        attachments
+        attachments,
+        startDate: startDate ? new Date(startDate).getTime() : undefined,
+        endDate: endDate ? new Date(endDate).getTime() : undefined
       });
       onClose();
     }
@@ -148,7 +153,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
             
             <div className="space-y-2 relative" ref={dropdownRef}>
               <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                Responsable <span className="text-red-500">*</span>
+                Responsable
               </label>
               <div className="relative">
                 <input
@@ -252,6 +257,33 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                Fecha de Inicio
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-emibytes-primary focus:border-transparent outline-none transition-all font-semibold"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                Fecha de Fin
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                className="w-full px-4 py-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-emibytes-primary focus:border-transparent outline-none transition-all font-semibold"
+              />
             </div>
           </div>
 

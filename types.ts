@@ -17,6 +17,8 @@ export interface Task {
   observations: string;
   status: TaskStatus;
   createdAt: number;
+  startDate?: number;
+  endDate?: number;
   attachments: Attachment[];
 }
 
