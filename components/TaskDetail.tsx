@@ -273,7 +273,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                       e.preventDefault();
                                       setTempResponsible(resp);
                                       setShowResponsibleDropdown(false);
-                                      handleSaveProperty('responsible');
+                                      // Guardar inmediatamente con el nuevo valor
+                                      if (resp !== task.responsible) {
+                                        taskService.addResponsible(resp);
+                                        onUpdate(task.id, { responsible: resp });
+                                      }
+                                      setEditingField(null);
                                     }}
                                     className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
                                   >
@@ -342,7 +347,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                       e.preventDefault();
                                       setTempProject(proj);
                                       setShowProjectDropdown(false);
-                                      handleSaveProperty('project');
+                                      // Guardar inmediatamente con el nuevo valor
+                                      if (proj !== task.project) {
+                                        taskService.addProject(proj);
+                                        onUpdate(task.id, { project: proj });
+                                      }
+                                      setEditingField(null);
                                     }}
                                     className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
                                   >
@@ -550,7 +560,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                   e.preventDefault();
                                   setTempResponsible(resp);
                                   setShowResponsibleDropdown(false);
-                                  handleSaveProperty('responsible');
+                                  // Guardar inmediatamente con el nuevo valor
+                                  if (resp !== task.responsible) {
+                                    taskService.addResponsible(resp);
+                                    onUpdate(task.id, { responsible: resp });
+                                  }
+                                  setEditingField(null);
                                 }}
                                 className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
                               >
@@ -619,7 +634,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                   e.preventDefault();
                                   setTempProject(proj);
                                   setShowProjectDropdown(false);
-                                  handleSaveProperty('project');
+                                  // Guardar inmediatamente con el nuevo valor
+                                  if (proj !== task.project) {
+                                    taskService.addProject(proj);
+                                    onUpdate(task.id, { project: proj });
+                                  }
+                                  setEditingField(null);
                                 }}
                                 className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
                               >
