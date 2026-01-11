@@ -268,8 +268,8 @@ const MainApp: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 p-4 lg:p-10 pb-24 lg:pb-10">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+      <main className="flex-1 lg:ml-64 p-4 lg:p-10 pb-24 lg:pb-10 max-w-full overflow-x-hidden">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 max-w-full">
           <div className="flex items-center gap-5">
             <div className="bg-white dark:bg-emibytes-dark-card p-2 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 hover:rotate-3 transition-all duration-500">
               <img
@@ -306,7 +306,7 @@ const MainApp: React.FC = () => {
           </div>
         </header>
 
-        <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-700 max-w-full overflow-x-hidden">
           {view === 'dashboard' ? (
             <Dashboard
               tasks={filteredTasks}

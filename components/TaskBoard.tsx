@@ -93,7 +93,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {columns.map(column => {
           const columnTasks = getTasksByStatus(column.status);
           const isOver = dragOverColumn === column.status;
@@ -101,7 +101,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
           return (
             <div
               key={column.status}
-              className="flex flex-col min-h-[calc(100vh-300px)]"
+              className="flex flex-col min-h-[200px] md:min-h-[500px]"
             >
               {/* Column Header */}
               <div className={`${column.bgColor} rounded-t-2xl p-4 border-b-4 ${
@@ -112,11 +112,13 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
                   <h3 className={`font-black text-sm uppercase tracking-wider ${column.color}`}>
                     {column.label}
                   </h3>
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${column.bgColor} ${column.color} border ${
-                    column.status === 'pendiente' ? 'border-amber-200 dark:border-amber-800' :
-                    column.status === 'en_proceso' ? 'border-blue-200 dark:border-blue-800' : 
-                    'border-green-200 dark:border-green-800'
-                  }`}>
+                  <span 
+                    className={`text-xs font-bold px-2.5 py-1 rounded-full ${column.bgColor} ${column.color} border ${
+                      column.status === 'pendiente' ? 'border-amber-200 dark:border-amber-800' :
+                      column.status === 'en_proceso' ? 'border-blue-200 dark:border-blue-800' : 
+                      'border-green-200 dark:border-green-800'
+                    }`}
+                  >
                     {columnTasks.length}
                   </span>
                 </div>
@@ -144,10 +146,10 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
                       onDragStart={(e) => handleDragStart(e, task)}
                       onDragEnd={handleDragEnd}
                       onClick={() => onTaskClick(task)}
-                      className="bg-white dark:bg-emibytes-dark-card rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 cursor-move hover:shadow-lg hover:border-emibytes-primary/50 transition-all group"
+                      className="bg-white dark:bg-emibytes-dark-card rounded-xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 cursor-move hover:shadow-lg hover:border-emibytes-primary/50 transition-all group"
                     >
                       {/* Drag Handle */}
-                      <div className="flex items-start gap-2 mb-3">
+                      <div className="flex items-start gap-2 mb-2">
                         <GripVertical 
                           size={16} 
                           className="text-gray-300 dark:text-gray-700 group-hover:text-emibytes-primary transition-colors mt-1 flex-shrink-0" 
@@ -175,7 +177,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
                       </div>
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                         <div className="flex items-center gap-1 text-[10px] text-gray-400">
                           <Calendar size={10} />
                           <span>{new Date(task.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>

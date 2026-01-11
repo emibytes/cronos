@@ -4,13 +4,26 @@
 
 import { authService } from './authService';
 
+// Extender ImportMeta para incluir env
+declare global {
+  interface ImportMeta {
+    env: {
+      VITE_APP_MODE?: string;
+      VITE_API_BASE_URL?: string;
+      VITE_API_PREFIX?: string;
+      VITE_API_TOKEN?: string;
+      VITE_API_TASKS_ENDPOINT?: string;
+    };
+  }
+}
+
 // Configuración desde variables de entorno
 const ENV_CONFIG = {
-  mode: import.meta.env.VITE_APP_MODE || 'local', // 'local' o 'production'
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://emibytes.test/api',
-  apiPrefix: import.meta.env.VITE_API_PREFIX || '/admin',
-  apiToken: import.meta.env.VITE_API_TOKEN || '',
-  tasksEndpoint: import.meta.env.VITE_API_TASKS_ENDPOINT || '/tasks',
+  mode: (import.meta.env?.VITE_APP_MODE || 'local') as 'local' | 'production',
+  apiBaseUrl: import.meta.env?.VITE_API_BASE_URL || 'http://emibytes.test/api',
+  apiPrefix: import.meta.env?.VITE_API_PREFIX || '/admin',
+  apiToken: import.meta.env?.VITE_API_TOKEN || '',
+  tasksEndpoint: import.meta.env?.VITE_API_TASKS_ENDPOINT || '/tasks',
 };
 
 export const isLocalMode = () => ENV_CONFIG.mode === 'local';
@@ -26,7 +39,7 @@ interface LaravelResponse<T> {
 }
 
 interface PaginatedData<T> {
-  [key: string]: T[];
+  data: T[];
   links: {
     first: string;
     last: string;

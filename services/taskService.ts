@@ -125,7 +125,8 @@ const apiTaskService = {
       const response = await apiService.getList<ApiTask>(config.tasksEndpoint);
       
       if (response.success && response.data) {
-        const tasksArray = response.data.tasks || response.data[Object.keys(response.data)[0]] || [];
+        // response.data es PaginatedData<ApiTask>, que tiene la propiedad 'data'
+        const tasksArray = response.data.data || [];
         return tasksArray.map(apiTaskToTask);
       }
       
