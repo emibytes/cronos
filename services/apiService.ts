@@ -196,6 +196,22 @@ class ApiService {
 
     return this.handleResponse<T>(response);
   }
+
+  // Obtener frase motivacional del día
+  async getDailyQuote(): Promise<LaravelResponse<{ quote: string }>> {
+    const user = authService.getCurrentUser();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    const response = await fetch(
+      this.buildUrl(`/tasks?project=Crecimiento profesional&responsible=${user?.email || ''}&date=${today}`),
+      {
+        method: 'GET',
+        headers: this.getHeaders(),
+      }
+    );
+
+    return this.handleResponse<{ quote: string }>(response);
+  }
 }
 
 // Exportar instancia única del servicio

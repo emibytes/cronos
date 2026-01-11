@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Task } from '../types';
-import { CheckCircle, Clock, ListTodo, Search, ArrowRight, FolderOpen } from 'lucide-react';
+import { CheckCircle, Clock, ListTodo, Search, ArrowRight, FolderOpen, Sparkles } from 'lucide-react';
 import { StatusBadge } from './TaskList';
+import { dashboardService } from '../services/dashboardService';
 
 interface DashboardProps {
   tasks: Task[];
@@ -12,6 +13,26 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ tasks, allTasksCount, onTaskClick }) => {
+  const [dailyQuote, setDailyQuote] = useState<string>('');
+  const [loadingQuote, setLoadingQuote] = useState(true);
+
+  // Cargar frase motivacional al montar el componente
+  useEffect(() => {
+    const loadDailyQuote = async () => {
+      try {
+        setLoadingQuote(true);
+        const quote = await dashboardService.getDailyQuote();
+        setDailyQuote(quote);
+      } catch (error) {
+        console.error('Error al cargar frase del día:', error);
+      } finally {
+        setLoadingQuote(false);
+      }
+    };
+
+    loadDailyQuote();
+  }, []);
+
   const stats = {
     total: tasks.length,
     pending: tasks.filter(t => t.status === 'pendiente').length,
@@ -39,6 +60,23 @@ const Dashboard: React.FC<DashboardProps> = ({ tasks, allTasksCount, onTaskClick
 
   return (
     <div className="space-y-6 sm:space-y-8 lg:space-y-10 max-w-full overflow-x-hidden">
+      {/* Frase Motivacional del Día */}
+      {!loadingQuote && dailyQuote && (
+        <div className="bg-gradient-to-br from-emibytes-primary to-green-600 p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <Sparkles size={24} className="animate-pulse" />
+              <h3 className="text-lg sm:text-xl font-black uppercase tracking-wider">Frase del Día</h3>
+            </div>
+            <p className="text-base sm:text-lg md:text-xl font-medium leading-relaxed italic">
+              "{dailyQuote}"
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header Info */}
       {isFiltered && (
         <div className="bg-emibytes-primary/10 border border-emibytes-primary/20 p-4 sm:p-5 rounded-2xl sm:rounded-3xl flex items-center justify-between shadow-sm max-w-full">

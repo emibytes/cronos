@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Task, TaskStatus } from '../types';
 import { GripVertical, User, FolderOpen, Clock, ExternalLink, Calendar } from 'lucide-react';
+import PomodoroModal from './PomodoroModal';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -12,6 +13,7 @@ interface TaskBoardProps {
 const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskStatus }) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
+  const [pomodoroTask, setPomodoroTask] = useState<Task | null>(null);
 
   const columns: { status: TaskStatus; label: string; color: string; bgColor: string }[] = [
     { 
@@ -66,7 +68,14 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
     setDragOverColumn(null);
     
     if (draggedTask && draggedTask.status !== status) {
-      onUpdateTaskStatus(draggedTask.id, status);
+      // Si se arrastra a "En Proceso" y viene de otro estado, abrir Pomodoro
+      if (status === 'en_proceso' && draggedTask.status !== 'en_proceso') {
+        setPomodoroTask(draggedTask);
+        onUpdateTaskStatus(draggedTask.id, status);
+      } else {
+        // Para otros cambios de estado, actualizar normalmente
+        onUpdateTaskStatus(draggedTask.id, status);
+      }
     }
     setDraggedTask(null);
   };
@@ -195,6 +204,18 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ tasks, onTaskClick, onUpdateTaskS
           );
         })}
       </div>
+
+      {/* Pomodoro Modal */}
+      {pomodoroTask && (
+        <PomodoroModal
+          task={pomodoroTask}
+          onClose={() => setPomodoroTask(null)}
+          onComplete={() => {
+            onUpdateTaskStatus(pomodoroTask.id, 'completada');
+            setPomodoroTask(null);
+          }}
+        />
+      )}
     </div>
   );
 };
