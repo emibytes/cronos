@@ -2,6 +2,8 @@
 // Servicio de autenticación con soporte para API REST de Laravel
 // Actualmente usa datos mock, preparado para integración con backend
 
+import { getApiConfig } from './apiService';
+
 interface User {
   id: number;
   name: string;
@@ -21,21 +23,31 @@ interface AuthResponse {
   message?: string;
 }
 
-// Configuración de API - cambiar cuando esté lista la API de Laravel
-const API_CONFIG = {
-  baseURL: 'http://localhost:8000/api', // URL de tu API Laravel
-  endpoints: {
-    login: '/auth/login',
-    logout: '/auth/logout',
-    me: '/auth/me',
-  },
-  useMock: true, // Cambiar a false cuando la API esté lista
-};
-
 const STORAGE_KEYS = {
   token: 'emibytes_auth_token',
   user: 'emibytes_user_data',
 };
+
+// Configuración de API desde variables de entorno (lazy evaluation)
+const getAuthConfig = () => {
+  const config = getApiConfig();
+  const authConfig = {
+    baseURL: config.apiBaseUrl,
+    endpoints: {
+      login: '/auth/login',
+      logout: '/auth/logout',
+      me: '/auth/me',
+    },
+    useMock: config.mode === 'local', // Mock solo en modo local
+  };
+  
+  // Debug: mostrar configuración de autenticación
+  if (import.meta.env.DEV) {
+    console.log('🔐 Configuración Auth:', authConfig);
+  }
+  
+  return authConfig;
+}
 
 // Datos mock para desarrollo
 const MOCK_USERS = [
@@ -56,6 +68,8 @@ const MOCK_USERS = [
 export const authService = {
   // Login con API o mock
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    const API_CONFIG = getAuthConfig();
+    
     if (API_CONFIG.useMock) {
       // Simulación de llamada a API (mock)
       return new Promise((resolve) => {
@@ -103,22 +117,28 @@ export const authService = {
         });
 
         const data = await response.json();
-
-        if (response.ok && data.token) {
+        console.log('🔍 Respuesta completa de la API:', { 
+          status: response.status, 
+          ok: response.ok, 
+          data 
+        });
+        
+        // Laravel retorna: { success: true, data: { token, user } }
+        if (response.ok && data.success && data.data?.token) {
           const userData: User = {
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email,
-            token: data.token,
+            id: data.data.user.id,
+            name: data.data.user.name,
+            email: data.data.user.email,
+            token: data.data.token,
           };
 
-          localStorage.setItem(STORAGE_KEYS.token, data.token);
+          localStorage.setItem(STORAGE_KEYS.token, data.data.token);
           localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(userData));
 
           return {
             success: true,
             user: userData,
-            token: data.token,
+            token: data.data.token,
           };
         } else {
           return {
@@ -138,6 +158,7 @@ export const authService = {
 
   // Logout
   logout: async (): Promise<void> => {
+    const API_CONFIG = getAuthConfig();
     const token = localStorage.getItem(STORAGE_KEYS.token);
 
     if (!API_CONFIG.useMock && token) {
@@ -185,6 +206,8 @@ export const authService = {
 
   // Verificar token con el servidor (solo para API real)
   verifyToken: async (): Promise<boolean> => {
+    const API_CONFIG = getAuthConfig();
+    
     if (API_CONFIG.useMock) {
       return authService.isAuthenticated();
     }
@@ -216,6 +239,7 @@ export const authService = {
 
 // Interceptor para requests futuros (útil cuando se integre la API)
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const API_CONFIG = getAuthConfig();
   const token = authService.getToken();
   
   const headers = {

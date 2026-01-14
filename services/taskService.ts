@@ -183,6 +183,7 @@ const apiTaskService = {
 // ============= SERVICIO UNIFICADO =============
 export const taskService = {
   getTasks: (): Task[] | Promise<Task[]> => {
+    console.log('📋 getTasks - Modo:', isLocalMode() ? 'LOCAL' : 'API');
     if (isLocalMode()) {
       return localService.getTasks();
     } else {

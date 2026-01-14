@@ -9,17 +9,17 @@ interface CalendarProps {
   onTaskClick: (task: Task) => void;
 }
 
-// Función para generar color consistente por proyecto
+// Función para generar color consistente por proyecto (estilo JIRA)
 const getProjectColor = (project: string): string => {
   const colors = [
-    { bg: 'bg-blue-100 dark:bg-blue-900/30', border: 'border-blue-500', text: 'text-blue-700 dark:text-blue-400' },
-    { bg: 'bg-purple-100 dark:bg-purple-900/30', border: 'border-purple-500', text: 'text-purple-700 dark:text-purple-400' },
-    { bg: 'bg-pink-100 dark:bg-pink-900/30', border: 'border-pink-500', text: 'text-pink-700 dark:text-pink-400' },
-    { bg: 'bg-orange-100 dark:bg-orange-900/30', border: 'border-orange-500', text: 'text-orange-700 dark:text-orange-400' },
-    { bg: 'bg-teal-100 dark:bg-teal-900/30', border: 'border-teal-500', text: 'text-teal-700 dark:text-teal-400' },
-    { bg: 'bg-indigo-100 dark:bg-indigo-900/30', border: 'border-indigo-500', text: 'text-indigo-700 dark:text-indigo-400' },
-    { bg: 'bg-rose-100 dark:bg-rose-900/30', border: 'border-rose-500', text: 'text-rose-700 dark:text-rose-400' },
-    { bg: 'bg-cyan-100 dark:bg-cyan-900/30', border: 'border-cyan-500', text: 'text-cyan-700 dark:text-cyan-400' },
+    'border-l-blue-500',
+    'border-l-purple-500',
+    'border-l-pink-500',
+    'border-l-orange-500',
+    'border-l-teal-500',
+    'border-l-indigo-500',
+    'border-l-rose-500',
+    'border-l-cyan-500',
   ];
   
   // Hash simple del nombre del proyecto para obtener color consistente
@@ -28,7 +28,28 @@ const getProjectColor = (project: string): string => {
     hash = project.charCodeAt(i) + ((hash << 5) - hash);
   }
   const index = Math.abs(hash) % colors.length;
-  return `${colors[index].bg} ${colors[index].border} ${colors[index].text}`;
+  return `bg-emibytes-dark-hover hover:bg-emibytes-dark-pressed ${colors[index]} border-l-[3px] text-gray-100`;
+};
+
+// Función para obtener solo el color del borde para la leyenda
+const getProjectBorderColor = (project: string): string => {
+  const colors = [
+    'border-l-blue-500',
+    'border-l-purple-500',
+    'border-l-pink-500',
+    'border-l-orange-500',
+    'border-l-teal-500',
+    'border-l-indigo-500',
+    'border-l-rose-500',
+    'border-l-cyan-500',
+  ];
+  
+  let hash = 0;
+  for (let i = 0; i < project.length; i++) {
+    hash = project.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
 };
 
 const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
@@ -213,7 +234,7 @@ const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
     const projects = [...new Set(tasks.map(t => t.project))];
     return projects.map((project: string) => ({
       name: project,
-      color: getProjectColor(project)
+      borderColor: getProjectBorderColor(project)
     }));
   }, [tasks]);
 
@@ -440,8 +461,8 @@ const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
         <div className="bg-white dark:bg-emibytes-dark-card rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Proyectos</h3>
           <div className="flex flex-wrap gap-2">
-            {projectColors.map(({ name, color }) => (
-              <div key={name} className={`px-3 py-1.5 rounded-full text-xs font-bold border-l-4 ${color}`}>
+            {projectColors.map(({ name, borderColor }) => (
+              <div key={name} className={`px-3 py-1.5 rounded-lg text-xs font-bold border-l-4 bg-gray-50 dark:bg-emibytes-dark-sunken ${borderColor}`}>
                 {name}
               </div>
             ))}
@@ -453,7 +474,7 @@ const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
       <div className="bg-white dark:bg-emibytes-dark-card rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden">
         {/* Encabezados de días */}
         {viewMode !== 'day' && (
-          <div className={`grid ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'} bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800`}>
+          <div className={`grid ${viewMode === 'week' ? 'grid-cols-7' : 'grid-cols-7'} bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200/30 dark:border-gray-700/20`}>
             {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
               <div key={day} className="p-3 text-center">
                 <span className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase">
@@ -511,7 +532,7 @@ const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
               return (
                 <div
                   key={index}
-                  className={`min-h-[200px] p-3 border-r border-b border-gray-100 dark:border-gray-800 ${
+                  className={`min-h-[200px] p-3 border-r border-b border-gray-200/30 dark:border-gray-700/20 ${
                     dayInfo.month !== currentDate.getMonth() 
                       ? 'bg-gray-50/50 dark:bg-gray-900/20' 
                       : 'bg-white dark:bg-emibytes-dark-card'
@@ -553,7 +574,7 @@ const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
               return (
                 <div
                   key={index}
-                  className={`min-h-[120px] p-2 border-r border-b border-gray-100 dark:border-gray-800 ${
+                  className={`min-h-[120px] p-2 border-r border-b border-gray-200/30 dark:border-gray-700/20 ${
                     !day ? 'bg-gray-50/50 dark:bg-gray-900/20' : 'bg-white dark:bg-emibytes-dark-card'
                   } ${index % 7 === 6 ? 'border-r-0' : ''}`}
                 >

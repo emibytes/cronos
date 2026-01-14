@@ -1,7 +1,8 @@
-
 import React, { useState } from 'react';
-import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff, X } from 'lucide-react';
 import { authService } from '../services/authService';
+import { isLocalMode } from '../services/apiService';
+import Swal from 'sweetalert2';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -14,6 +15,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +45,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Función para autocompletar credenciales de prueba
   const fillTestCredentials = (userType: 'admin' | 'user') => {
     if (userType === 'admin') {
       setEmail('admin@emibytes.com');
@@ -53,18 +56,71 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setError('');
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Email requerido',
+        text: 'Por favor ingresa tu correo electrónico',
+        confirmButtonColor: '#138b52',
+      });
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const response = await fetch('http://cronos.test/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setShowForgotPassword(false);
+        setResetEmail('');
+        Swal.fire({
+          icon: 'success',
+          title: '¡Correo enviado!',
+          text: 'Revisa tu bandeja de entrada para restablecer tu contraseña',
+          confirmButtonColor: '#138b52',
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.message || 'No se pudo enviar el correo de recuperación',
+          confirmButtonColor: '#138b52',
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de conexión',
+        text: 'No se pudo conectar con el servidor',
+        confirmButtonColor: '#138b52',
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emibytes-background via-gray-50 to-green-50 dark:from-emibytes-dark-bg dark:via-gray-900 dark:to-gray-900 p-4">
-      {/* Patron de fondo decorativo */}
       <div className="absolute inset-0 overflow-hidden opacity-5 dark:opacity-10">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-emibytes-primary rounded-full blur-3xl"></div>
         <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-blue-500 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative w-full max-w-md">
-        {/* Card de Login */}
         <div className="bg-white dark:bg-emibytes-dark-card rounded-[32px] shadow-2xl p-8 lg:p-10 border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-500">
-          {/* Logo y Header */}
           <div className="text-center mb-8">
             <div className="mb-6 flex justify-center">
               {!logoError ? (
@@ -88,9 +144,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </p>
           </div>
 
-          {/* Formulario */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
             <div className="space-y-2">
               <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
                 Correo Electrónico
@@ -113,7 +167,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
                 Contraseña
@@ -143,19 +196,17 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 flex items-center gap-2 animate-in slide-in-from-top-2 duration-300">
-                <AlertCircle size={18} className="text-red-600 dark:text-red-400 flex-shrink-0" />
-                <p className="text-sm text-red-600 dark:text-red-400 font-bold">{error}</p>
+                <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-emibytes-primary text-white rounded-xl font-black uppercase tracking-wider shadow-lg shadow-emibytes-primary/30 hover:shadow-xl hover:shadow-emibytes-primary/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 bg-emibytes-primary text-white rounded-2xl font-black shadow-lg shadow-emibytes-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 uppercase tracking-wider text-sm"
             >
               {isLoading ? (
                 <>
@@ -171,30 +222,30 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </button>
           </form>
 
-          {/* Credenciales de prueba (solo en modo mock) */}
-          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-black text-center mb-3">
-              Credenciales de Prueba
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => fillTestCredentials('admin')}
-                className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xs font-bold transition-colors border border-gray-200 dark:border-gray-700"
-              >
-                👨‍💼 Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => fillTestCredentials('user')}
-                className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xs font-bold transition-colors border border-gray-200 dark:border-gray-700"
-              >
-                👩 Usuario
-              </button>
+          {isLocalMode() && (
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider font-black text-center mb-3">
+                Credenciales de Prueba
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => fillTestCredentials('admin')}
+                  className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xs font-bold transition-colors border border-gray-200 dark:border-gray-700"
+                >
+                  👨‍💼 Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillTestCredentials('user')}
+                  className="px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xs font-bold transition-colors border border-gray-200 dark:border-gray-700"
+                >
+                  👩 Usuario
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
               Powered by emibytes
@@ -202,16 +253,74 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        {/* Info adicional */}
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
             ¿Olvidaste tu contraseña?{' '}
-            <button className="text-emibytes-primary font-bold hover:underline">
+            <button 
+              onClick={() => setShowForgotPassword(true)}
+              className="text-emibytes-primary font-bold hover:underline"
+            >
               Recuperar acceso
             </button>
           </p>
         </div>
       </div>
+
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-emibytes-dark-card rounded-3xl shadow-2xl p-8 max-w-md w-full border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-emibytes-secondary dark:text-white">
+                Recuperar Contraseña
+              </h2>
+              <button
+                onClick={() => setShowForgotPassword(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.
+            </p>
+
+            <form onSubmit={handleForgotPassword} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                  Correo Electrónico
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border-2 border-transparent focus:border-emibytes-primary focus:bg-white dark:focus:bg-gray-900 transition-all outline-none font-medium"
+                    placeholder="tu@email.com"
+                  />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isResetting}
+                className="w-full py-3 bg-emibytes-primary text-white rounded-2xl font-black uppercase tracking-wider shadow-lg shadow-emibytes-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isResetting ? 'Enviando...' : 'Enviar Instrucciones'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(false)}
+                className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancelar
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

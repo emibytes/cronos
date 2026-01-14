@@ -10,6 +10,7 @@ import Calendar from './components/Calendar';
 import TaskForm from './components/TaskForm';
 import TaskDetail from './components/TaskDetail';
 import Login from './components/Login';
+import ResetPassword from './components/ResetPassword';
 import ThemeToggle from './components/ThemeToggle';
 import { Task, TaskStatus } from './types';
 import { taskService } from './services/taskService';
@@ -18,7 +19,7 @@ import { authService } from './services/authService';
 const MainApp: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = cargando
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -27,6 +28,8 @@ const MainApp: React.FC = () => {
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
+  console.log('🚀 MainApp montado - pathname:', location.pathname, 'isAuth:', isAuthenticated);
+
   // Determinar vista actual desde la ruta
   const view = location.pathname === '/tablero' ? 'board'
     : location.pathname === '/calendario' ? 'calendar'
@@ -34,8 +37,14 @@ const MainApp: React.FC = () => {
         : 'dashboard';
 
   useEffect(() => {
-    // Verificar autenticación
+    // Verificar autenticación cada vez que cambia la ubicación
     const authenticated = authService.isAuthenticated();
+    console.log('🔍 MainApp - Verificando autenticación:', {
+      authenticated,
+      pathname: location.pathname,
+      token: authService.getToken()?.substring(0, 20) + '...',
+      user: authService.getCurrentUser()
+    });
     setIsAuthenticated(authenticated);
 
     if (authenticated) {
@@ -59,7 +68,7 @@ const MainApp: React.FC = () => {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
     return () => observer.disconnect();
-  }, []);
+  }, [location.pathname]); // Verificar cada vez que cambia la ruta
 
   const handleAddTask = useCallback(async (taskData: {
     title: string;
@@ -188,9 +197,21 @@ const MainApp: React.FC = () => {
     }
   };
 
-  // Si no está autenticado, mostrar Login
+  // Mostrar loading mientras se verifica autenticación
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-emibytes-background dark:bg-emibytes-dark-bg">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-emibytes-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no está autenticado, redirigir a login
   if (!isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
+    return <Navigate to="/login" replace />;
   }
 
   const filteredTasks = tasks.filter(t =>
@@ -414,11 +435,32 @@ const NavItem = ({ active, onClick, icon, label }: { active: boolean; onClick: (
   </button>
 );
 
+// Componente separado para la página de Login
+const LoginPage: React.FC = () => {
+  const isAuth = authService.isAuthenticated();
+  console.log('👤 LoginPage - isAuthenticated:', isAuth);
+
+  const handleLoginSuccess = () => {
+    console.log('✅ Login exitoso, redirigiendo...');
+    // Usar replace para evitar que quede en el historial
+    window.location.replace('/dashboard');
+  };
+
+  if (isAuth) {
+    console.log('🔄 Usuario autenticado, navegando a dashboard...');
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Login onLoginSuccess={handleLoginSuccess} />;
+};
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/" element={<MainApp />} />
         <Route path="/dashboard" element={<MainApp />} />
         <Route path="/tablero" element={<MainApp />} />
         <Route path="/calendario" element={<MainApp />} />

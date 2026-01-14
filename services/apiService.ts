@@ -19,12 +19,17 @@ declare global {
 
 // Configuración desde variables de entorno
 const ENV_CONFIG = {
-  mode: (import.meta.env?.VITE_APP_MODE || 'local') as 'local' | 'production',
-  apiBaseUrl: import.meta.env?.VITE_API_BASE_URL || 'http://emibytes.test/api',
-  apiPrefix: import.meta.env?.VITE_API_PREFIX || '/admin',
-  apiToken: import.meta.env?.VITE_API_TOKEN || '',
-  tasksEndpoint: import.meta.env?.VITE_API_TASKS_ENDPOINT || '/tasks',
+  mode: (import.meta.env.VITE_APP_MODE || 'local') as 'local' | 'production',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://cronos.test/api',
+  apiPrefix: import.meta.env.VITE_API_PREFIX || '/admin',
+  apiToken: import.meta.env.VITE_API_TOKEN || '',
+  tasksEndpoint: import.meta.env.VITE_API_TASKS_ENDPOINT || '/tasks',
 };
+
+// Debug: Log de configuración en desarrollo
+if (import.meta.env.DEV) {
+  console.log('🔧 Configuración API:', ENV_CONFIG);
+}
 
 export const isLocalMode = () => ENV_CONFIG.mode === 'local';
 export const isProductionMode = () => ENV_CONFIG.mode === 'production';

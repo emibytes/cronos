@@ -43,7 +43,7 @@
             border-radius: 4px;
         }
         .dark::-webkit-scrollbar-thumb {
-            background: #475569;
+            background: #3D3F43;
         }
         
         /* Customizing Quill for emibytes brand */
@@ -54,8 +54,8 @@
             background: #f9fafb;
         }
         .dark .ql-toolbar.ql-snow {
-            border-color: #374151;
-            background: #1f2937;
+            border-color: #3D3F43;
+            background: #242528;
         }
         .ql-container.ql-snow {
             border-bottom-left-radius: 0.75rem;
@@ -68,8 +68,8 @@
             overflow-y: auto;
         }
         .dark .ql-container.ql-snow {
-            border-color: #374151;
-            background: #2d2d2d;
+            border-color: #3D3F43;
+            background: #242528;
             color: #f3f4f6;
         }
         .ql-editor {
@@ -95,8 +95,17 @@
                             secondary: '#333333',
                             tertiary: '#ffffff',
                             background: '#f8fafc',
-                            'dark-bg': '#1a1a1a',
-                            'dark-card': '#2d2d2d'
+                            // JIRA Dark Theme Colors
+                            'dark-bg': '#1F1F21',              // ds-surface (fondo principal)
+                            'dark-card': '#242528',            // ds-surface-raised (cards)
+                            'dark-hover': '#2B2C2F',           // ds-surface-hovered
+                            'dark-pressed': '#303134',         // ds-surface-overlay-hovered
+                            'dark-overlay': '#2B2C2F',         // ds-surface-overlay (modals)
+                            'dark-sunken': '#18191A',          // ds-surface-sunken (inputs)
+                            'dark-border': '#3D3F43',          // ds-surface-overlay-pressed (borders)
+                            'dark-column': '#101214',          // Columnas tablero (más oscuro que sunken)
+                            // Light theme
+                            'light-column': '#F7F8F9'          // Columnas tablero modo claro
                         }
                     }
                 }
