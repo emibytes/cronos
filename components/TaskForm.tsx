@@ -5,10 +5,11 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { Attachment } from '../types';
 import { taskService } from '../services/taskService';
+import { projectService, Project } from '../services/projectService';
 
 interface TaskFormProps {
   onClose: () => void;
-  onSubmit: (task: { title: string; responsible: string; project: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
+  onSubmit: (task: { title: string; responsible: string; project: string; project_id: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
 }
 
 interface FormErrors {
@@ -31,7 +32,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   
   const [title, setTitle] = useState('');
   const [responsible, setResponsible] = useState('');
-  const [project, setProject] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [projectName, setProjectName] = useState('');
   const [observations, setObservations] = useState('');
   const [startDate, setStartDate] = useState<string>(todayString);
   const [endDate, setEndDate] = useState<string>(todayString);
@@ -42,13 +44,28 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false);
   const [availableResponsibles, setAvailableResponsibles] = useState<string[]>([]);
-  const [availableProjects, setAvailableProjects] = useState<string[]>([]);
+  const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const projectDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setAvailableResponsibles(taskService.getResponsibles());
-    setAvailableProjects(taskService.getProjects());
+    
+    // Cargar proyectos desde la API
+    const loadProjects = async () => {
+      setIsLoadingProjects(true);
+      try {
+        const projects = await projectService.getActiveProjects();
+        setAvailableProjects(projects);
+      } catch (error) {
+        console.error('Error al cargar proyectos:', error);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+    loadProjects();
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
@@ -73,20 +90,20 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   }, [responsible, availableResponsibles]);
 
   const filteredProjects = useMemo(() => {
-    if (!project) return availableProjects;
+    if (!projectName) return availableProjects;
     return availableProjects.filter(p => 
-      p.toLowerCase().includes(project.toLowerCase())
+      p.name.toLowerCase().includes(projectName.toLowerCase())
     );
-  }, [project, availableProjects]);
+  }, [projectName, availableProjects]);
 
   const exactProjectMatch = useMemo(() => {
-    return availableProjects.some(p => p.toLowerCase() === project.toLowerCase());
-  }, [project, availableProjects]);
+    return availableProjects.some(p => p.name.toLowerCase() === projectName.toLowerCase());
+  }, [projectName, availableProjects]);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!title.trim()) newErrors.title = 'El título es obligatorio';
-    if (!project.trim()) newErrors.project = 'El proyecto es obligatorio';
+    if (!projectId) newErrors.project = 'El proyecto es obligatorio';
     if (!observations.trim() || observations === '<p><br></p>') newErrors.observations = 'Las observaciones son obligatorias';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -98,7 +115,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
       onSubmit({
         title,
         responsible,
-        project,
+        project: projectName,
+        project_id: projectId,
         observations,
         attachments,
         startDate: startDate ? new Date(startDate).getTime() : undefined,
@@ -213,47 +231,49 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
                 <input
                   autoComplete="off"
                   type="text"
-                  value={project}
+                  value={projectName}
                   onFocus={() => setIsProjectMenuOpen(true)}
                   onChange={(e) => {
-                    setProject(e.target.value);
+                    setProjectName(e.target.value);
                     setIsProjectMenuOpen(true);
                     if (errors.project) setErrors(prev => ({ ...prev, project: undefined }));
                   }}
                   placeholder="Seleccionar proyecto..."
                   className={`w-full px-4 py-3 rounded-xl border ${errors.project ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'} focus:ring-2 focus:ring-emibytes-primary focus:border-transparent outline-none transition-all font-semibold`}
+                  disabled={isLoadingProjects}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <Search size={18} />
+                  {isLoadingProjects ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
+                  ) : (
+                    <Search size={18} />
+                  )}
                 </div>
               </div>
               {errors.project && <p className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-1 uppercase"><AlertCircle size={12} /> {errors.project}</p>}
 
-              {isProjectMenuOpen && (
+              {isProjectMenuOpen && !isLoadingProjects && (
                 <div className="absolute z-50 w-full mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-                  {filteredProjects.map((p, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setProject(p);
-                        setIsProjectMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm flex items-center space-x-2 transition-colors font-bold"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emibytes-primary"></span>
-                      <span>{p}</span>
-                    </button>
-                  ))}
-                  {project && !exactProjectMatch && (
-                    <button
-                      type="button"
-                      onClick={() => setIsProjectMenuOpen(false)}
-                      className="w-full text-left px-4 py-3 bg-emibytes-primary/5 dark:bg-emibytes-primary/10 hover:bg-emibytes-primary/10 text-emibytes-primary text-xs font-black flex items-center space-x-2 transition-colors border-t border-emibytes-primary/10 uppercase"
-                    >
-                      <UserPlus size={14} />
-                      <span>Nuevo: "{project}"</span>
-                    </button>
+                  {filteredProjects.length > 0 ? (
+                    filteredProjects.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setProjectId(p.id);
+                          setProjectName(p.name);
+                          setIsProjectMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm flex items-center space-x-2 transition-colors font-bold"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }}></span>
+                        <span>{p.name}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-xs text-gray-500 text-center">
+                      No se encontraron proyectos
+                    </div>
                   )}
                 </div>
               )}

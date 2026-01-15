@@ -13,7 +13,8 @@ export interface Task {
   id: string;
   title: string;
   responsible: string;
-  project: string;
+  project: string; // Nombre del proyecto (para mostrar)
+  project_id?: string; // ID del proyecto (para enviar al backend)
   observations: string;
   status: TaskStatus;
   createdAt: number;

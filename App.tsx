@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, LayoutDashboard, ListTodo, Search, Kanban, CalendarDays, LogOut } from 'lucide-react';
+import { Plus, LayoutDashboard, ListTodo, Search, Kanban, CalendarDays, LogOut, FolderKanban } from 'lucide-react';
 import Swal from 'sweetalert2';
 import Dashboard from './components/Dashboard';
 import TaskList from './components/TaskList';
@@ -9,12 +9,15 @@ import TaskBoard from './components/TaskBoard';
 import Calendar from './components/Calendar';
 import TaskForm from './components/TaskForm';
 import TaskDetail from './components/TaskDetail';
+import ProjectList from './components/ProjectList';
+import ProjectForm from './components/ProjectForm';
 import Login from './components/Login';
 import ResetPassword from './components/ResetPassword';
 import ThemeToggle from './components/ThemeToggle';
 import { Task, TaskStatus } from './types';
 import { taskService } from './services/taskService';
 import { authService } from './services/authService';
+import { Project } from './services/projectService';
 
 const MainApp: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +26,10 @@ const MainApp: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [projectListKey, setProjectListKey] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -31,9 +37,10 @@ const MainApp: React.FC = () => {
   console.log('🚀 MainApp montado - pathname:', location.pathname, 'isAuth:', isAuthenticated);
 
   // Determinar vista actual desde la ruta
-  const view = location.pathname === '/tablero' ? 'board'
-    : location.pathname === '/calendario' ? 'calendar'
-      : location.pathname === '/tareas' ? 'tasks'
+  const view = location.pathname === '/board' ? 'board'
+    : location.pathname === '/calendar' ? 'calendar'
+      : location.pathname === '/tasks' ? 'tasks'
+        : location.pathname === '/projects' ? 'projects'
         : 'dashboard';
 
   useEffect(() => {
@@ -241,20 +248,26 @@ const MainApp: React.FC = () => {
             label="Dashboard"
           />
           <NavItem
+            active={view === 'projects'}
+            onClick={() => navigate('/projects')}
+            icon={<FolderKanban size={20} />}
+            label="Proyectos"
+          />
+          <NavItem
             active={view === 'board'}
-            onClick={() => navigate('/tablero')}
+            onClick={() => navigate('/board')}
             icon={<Kanban size={20} />}
             label="Tablero"
           />
           <NavItem
             active={view === 'calendar'}
-            onClick={() => navigate('/calendario')}
+            onClick={() => navigate('/calendar')}
             icon={<CalendarDays size={20} />}
             label="Calendario"
           />
           <NavItem
             active={view === 'tasks'}
-            onClick={() => navigate('/tareas')}
+            onClick={() => navigate('/tasks')}
             icon={<ListTodo size={20} />}
             label="Mis Tareas"
           />
@@ -317,13 +330,15 @@ const MainApp: React.FC = () => {
               />
             </div>
             <ThemeToggle />
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="px-6 py-3 bg-emibytes-primary text-white rounded-2xl font-black shadow-lg shadow-emibytes-primary/30 hover:scale-[1.03] active:scale-95 transition-all flex items-center space-x-2 uppercase text-xs tracking-widest"
-            >
-              <Plus size={18} strokeWidth={3} />
-              <span className="hidden sm:inline">Nueva Tarea</span>
-            </button>
+            {view !== 'projects' && (
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="px-6 py-3 bg-emibytes-primary text-white rounded-2xl font-black shadow-lg shadow-emibytes-primary/30 hover:scale-[1.03] active:scale-95 transition-all flex items-center space-x-2 uppercase text-xs tracking-widest"
+              >
+                <Plus size={18} strokeWidth={3} />
+                <span className="hidden sm:inline">Nueva Tarea</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -333,6 +348,18 @@ const MainApp: React.FC = () => {
               tasks={filteredTasks}
               allTasksCount={tasks.length}
               onTaskClick={(task) => setSelectedTask(task)}
+            />
+          ) : view === 'projects' ? (
+            <ProjectList
+              key={projectListKey}
+              onEdit={(project) => {
+                setSelectedProject(project);
+                setIsProjectFormOpen(true);
+              }}
+              onAdd={() => {
+                setSelectedProject(null);
+                setIsProjectFormOpen(true);
+              }}
             />
           ) : view === 'board' ? (
             <TaskBoard
@@ -368,7 +395,14 @@ const MainApp: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate('/tablero')}
+            onClick={() => navigate('/projects')}
+            className={`transition-all active:scale-90 ${view === 'projects' ? 'text-emibytes-primary' : 'text-gray-400'}`}
+          >
+            <FolderKanban size={24} />
+          </button>
+
+          <button
+            onClick={() => navigate('/board')}
             className={`transition-all active:scale-90 ${view === 'board' ? 'text-emibytes-primary' : 'text-gray-400'}`}
           >
             <Kanban size={24} />
@@ -391,14 +425,14 @@ const MainApp: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate('/calendario')}
+            onClick={() => navigate('/calendar')}
             className={`transition-all active:scale-90 ${view === 'calendar' ? 'text-emibytes-primary' : 'text-gray-400'}`}
           >
             <CalendarDays size={24} />
           </button>
 
           <button
-            onClick={() => navigate('/tareas')}
+            onClick={() => navigate('/tasks')}
             className={`transition-all active:scale-90 ${view === 'tasks' ? 'text-emibytes-primary' : 'text-gray-400'}`}
           >
             <ListTodo size={24} />
@@ -408,6 +442,20 @@ const MainApp: React.FC = () => {
 
       {isFormOpen && (
         <TaskForm onClose={() => setIsFormOpen(false)} onSubmit={handleAddTask} />
+      )}
+
+      {isProjectFormOpen && (
+        <ProjectForm
+          project={selectedProject || undefined}
+          onClose={() => {
+            setIsProjectFormOpen(false);
+            setSelectedProject(null);
+          }}
+          onSuccess={() => {
+            // Forzar recarga de ProjectList
+            setProjectListKey(prev => prev + 1);
+          }}
+        />
       )}
 
       {selectedTask && (
@@ -462,9 +510,10 @@ const App: React.FC = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<MainApp />} />
         <Route path="/dashboard" element={<MainApp />} />
-        <Route path="/tablero" element={<MainApp />} />
-        <Route path="/calendario" element={<MainApp />} />
-        <Route path="/tareas" element={<MainApp />} />
+        <Route path="/projects" element={<MainApp />} />
+        <Route path="/board" element={<MainApp />} />
+        <Route path="/calendar" element={<MainApp />} />
+        <Route path="/tasks" element={<MainApp />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
