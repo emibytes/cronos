@@ -199,19 +199,13 @@ class ApiService {
   }
 
   // Obtener frase motivacional del día
-  async getDailyQuote(): Promise<LaravelResponse<{ quote: string }>> {
-    const user = authService.getCurrentUser();
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    
-    const response = await fetch(
-      this.buildUrl(`/tasks?project=Crecimiento profesional&responsible=${user?.email || ''}&date=${today}`),
-      {
-        method: 'GET',
-        headers: this.getHeaders(),
-      }
-    );
+  async getDailyQuote(): Promise<LaravelResponse<{ quote: string; author?: string; category?: string }>> {
+    const response = await fetch(this.buildUrl('/quotes/daily'), {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
 
-    return this.handleResponse<{ quote: string }>(response);
+    return this.handleResponse<{ quote: string; author?: string; category?: string }>(response);
   }
 }
 

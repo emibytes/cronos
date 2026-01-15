@@ -49,17 +49,17 @@ interface SingleTaskResponse {
 }
 
 // Convertir de API a modelo local
-const apiTaskToTask = (apiTask: ApiTask): Task => ({
+const apiTaskToTask = (apiTask: any): Task => ({
   id: apiTask.id,
   title: apiTask.title,
   responsible: apiTask.responsible,
   project: apiTask.project,
   observations: apiTask.observations,
   status: apiTask.status,
-  createdAt: new Date(apiTask.created_at).getTime(),
-  startDate: apiTask.start_date ? new Date(apiTask.start_date).getTime() : undefined,
-  endDate: apiTask.end_date ? new Date(apiTask.end_date).getTime() : undefined,
-  attachments: [], // Por ahora vacío
+  createdAt: apiTask.createdAt || new Date(apiTask.created_at).getTime(),
+  startDate: apiTask.startDate || (apiTask.start_date ? new Date(apiTask.start_date).getTime() : undefined),
+  endDate: apiTask.endDate || (apiTask.end_date ? new Date(apiTask.end_date).getTime() : undefined),
+  attachments: apiTask.attachments || [],
 });
 
 // Convertir de modelo local a API
