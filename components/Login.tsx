@@ -9,7 +9,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
+    if (!login || !password) {
       setError('Por favor completa todos los campos');
       return;
     }
@@ -31,7 +31,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      const response = await authService.login({ email, password });
+      const response = await authService.login({ login, password });
 
       if (response.success) {
         onLoginSuccess();
@@ -47,10 +47,10 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
   const fillTestCredentials = (userType: 'admin' | 'user') => {
     if (userType === 'admin') {
-      setEmail('admin@emibytes.com');
-      setPassword('admin123');
+      setLogin('emibytes');
+      setPassword('3Maissie$2025');
     } else {
-      setEmail('jessica@emibytes.com');
+      setLogin('jessica@emibytes.com');
       setPassword('jessica123');
     }
     setError('');
@@ -147,17 +147,17 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                Correo Electrónico
+                Email o Usuario
               </label>
               <div className="relative">
                 <input
-                  type="email"
-                  value={email}
+                  type="text"
+                  value={login}
                   onChange={(e) => {
-                    setEmail(e.target.value);
+                    setLogin(e.target.value);
                     setError('');
                   }}
-                  placeholder="tu@email.com"
+                  placeholder="tu@email.com o usuario"
                   className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-emibytes-primary focus:border-transparent outline-none transition-all font-semibold"
                   disabled={isLoading}
                 />

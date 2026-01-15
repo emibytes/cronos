@@ -53,6 +53,8 @@ const apiTaskToTask = (apiTask: any): Task => ({
   id: apiTask.id,
   title: apiTask.title,
   responsible: apiTask.responsible,
+  responsibleId: apiTask.responsibleId || apiTask.responsible_id,
+  responsibleUser: apiTask.responsibleUser,
   project: apiTask.project,
   observations: apiTask.observations,
   status: apiTask.status,
@@ -65,9 +67,9 @@ const apiTaskToTask = (apiTask: any): Task => ({
 // Convertir de modelo local a API
 const taskToApiTask = (task: Partial<Task>): any => ({
   ...(task.title && { title: task.title }),
-  ...(task.responsible && { responsible: task.responsible }),
+  ...(task.responsibleId !== undefined && { responsible_id: task.responsibleId }),
   ...(task.project && { project: task.project }),
-  ...(task.observations && { observations: task.observations }),
+  ...(task.observations !== undefined && { observations: task.observations }),
   ...(task.status && { status: task.status }),
   start_date: task.startDate ? new Date(task.startDate).toISOString() : null,
   end_date: task.endDate ? new Date(task.endDate).toISOString() : null,

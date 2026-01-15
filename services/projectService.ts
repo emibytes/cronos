@@ -294,4 +294,12 @@ export const projectService = {
     const response = await this.getProjects({ status: 'active', per_page: 1000 });
     return response.projects;
   },
+
+  /**
+   * Get all projects (for selects, without pagination)
+   */
+  async getAllProjects(): Promise<Project[]> {
+    const response = await this.getProjects({ per_page: 1000 });
+    return response.projects;
+  },
 };

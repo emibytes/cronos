@@ -4,9 +4,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, User, Calendar, Save, Trash2, CheckCircle2, ClipboardList, FolderOpen, ChevronDown } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import Flatpickr from 'react-flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
+import 'flatpickr/dist/themes/airbnb.css';
+import '../public/flatpickr-custom.css';
 import { Task, TaskStatus } from '../types';
 import { StatusBadge } from './TaskList';
 import { taskService } from '../services/taskService';
+import { userService, User as UserType } from '../services/userService';
+import { projectService, Project } from '../services/projectService';
 
 interface TaskDetailProps {
   task: Task;
@@ -26,7 +32,7 @@ const modules = {
 
 const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDelete }) => {
 
-  const [tempObservations, setTempObservations] = useState(task.observations);
+  const [tempObservations, setTempObservations] = useState(task.observations || '');
   const [tempStatus, setTempStatus] = useState<TaskStatus>(task.status);
   const [isEditing, setIsEditing] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -35,22 +41,53 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
   const [tempProject, setTempProject] = useState(task.project);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempResponsible, setTempResponsible] = useState(task.responsible);
-  const [tempEndDate, setTempEndDate] = useState(task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '');
-  const [tempStartDate, setTempStartDate] = useState(task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '');
+  const [tempEndDate, setTempEndDate] = useState<Date | null>(task.endDate ? new Date(task.endDate) : null);
+  const [tempStartDate, setTempStartDate] = useState<Date | null>(task.startDate ? new Date(task.startDate) : null);
 
   // Estados para autocomplete
   const [showResponsibleDropdown, setShowResponsibleDropdown] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
-  const [allResponsibles, setAllResponsibles] = useState<string[]>([]);
-  const [allProjects, setAllProjects] = useState<string[]>([]);
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   const responsibleRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
 
-  // Cargar responsables y proyectos existentes
+  // Cargar usuarios y proyectos del backend
   useEffect(() => {
-    setAllResponsibles(taskService.getResponsibles());
-    setAllProjects(taskService.getProjects());
+    const loadData = async () => {
+      try {
+        setLoadingUsers(true);
+        setLoadingProjects(true);
+        
+        const [users, projects] = await Promise.all([
+          userService.getAllUsers(),
+          projectService.getAllProjects()
+        ]);
+        
+        // Obtener usuario actual
+        const currentUser = JSON.parse(localStorage.getItem('emibytes_user_data') || '{}');
+        
+        // Ordenar usuarios: primero el usuario actual, luego los demás
+        const sortedUsers = users.sort((a, b) => {
+          if (a.id === currentUser.id) return -1;
+          if (b.id === currentUser.id) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
+        setAllUsers(sortedUsers);
+        setAllProjects(projects);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      } finally {
+        setLoadingUsers(false);
+        setLoadingProjects(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   // Cerrar dropdowns al hacer click fuera
@@ -69,13 +106,13 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
   }, []);
 
   // Filtrar opciones basado en el input
-  const filteredResponsibles = tempResponsible.trim() === '' 
-    ? allResponsibles 
-    : allResponsibles.filter(r => r.toLowerCase().includes(tempResponsible.toLowerCase()));
+  const filteredUsers = tempResponsible.trim() === '' 
+    ? allUsers 
+    : allUsers.filter(u => u.name.toLowerCase().includes(tempResponsible.toLowerCase()));
 
   const filteredProjects = tempProject.trim() === '' 
     ? allProjects 
-    : allProjects.filter(p => p.toLowerCase().includes(tempProject.toLowerCase()));
+    : allProjects.filter(p => p.name.toLowerCase().includes(tempProject.toLowerCase()));
 
   const handleSaveProperty = (field: string) => {
     const updates: Partial<Task> = {};
@@ -83,24 +120,26 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
     switch (field) {
       case 'responsible':
         if (tempResponsible !== task.responsible) {
-          updates.responsible = tempResponsible;
-          taskService.addResponsible(tempResponsible); // Guardar en lista
+          // Buscar el ID del usuario seleccionado
+          const selectedUser = allUsers.find(u => u.name === tempResponsible);
+          if (selectedUser) {
+            updates.responsibleId = selectedUser.id;
+          }
         }
         break;
       case 'project':
         if (tempProject !== task.project) {
           updates.project = tempProject;
-          taskService.addProject(tempProject); // Guardar en lista
         }
         break;
       case 'startDate':
-        const newStartDate = tempStartDate ? new Date(tempStartDate).getTime() : undefined;
+        const newStartDate = tempStartDate ? tempStartDate.getTime() : undefined;
         if (newStartDate !== task.startDate) {
           updates.startDate = newStartDate;
         }
         break;
       case 'endDate':
-        const newEndDate = tempEndDate ? new Date(tempEndDate).getTime() : undefined;
+        const newEndDate = tempEndDate ? tempEndDate.getTime() : undefined;
         if (newEndDate !== task.endDate) {
           updates.endDate = newEndDate;
         }
@@ -123,10 +162,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
         setTempProject(task.project);
         break;
       case 'startDate':
-        setTempStartDate(task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '');
+        setTempStartDate(task.startDate ? new Date(task.startDate) : null);
         break;
       case 'endDate':
-        setTempEndDate(task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '');
+        setTempEndDate(task.endDate ? new Date(task.endDate) : null);
         break;
     }
     setEditingField(null);
@@ -228,7 +267,8 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                     onClick={() => {
                       if (editingField !== 'responsible') {
                         setEditingField('responsible');
-                        setTempResponsible(''); // Limpiar para mostrar todas las opciones
+                        setTempResponsible(''); // Limpiar para mostrar todos
+                        setTempResponsible(''); // Limpiar para mostrar todos
                         setShowResponsibleDropdown(true);
                       }
                     }}
@@ -260,29 +300,35 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                 }
                               }}
                               autoFocus
-                              placeholder={task.responsible}
+                              placeholder="Buscar usuario..."
                               className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                             />
-                            {showResponsibleDropdown && filteredResponsibles.length > 0 && (
+                            {showResponsibleDropdown && filteredUsers.length > 0 && (
                               <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
-                                {filteredResponsibles.map((resp, idx) => (
+                                {filteredUsers.map((user) => (
                                   <button
-                                    key={idx}
+                                    key={user.id}
                                     type="button"
                                     onMouseDown={(e) => {
                                       e.preventDefault();
-                                      setTempResponsible(resp);
+                                      setTempResponsible(user.name);
                                       setShowResponsibleDropdown(false);
-                                      // Guardar inmediatamente con el nuevo valor
-                                      if (resp !== task.responsible) {
-                                        taskService.addResponsible(resp);
-                                        onUpdate(task.id, { responsible: resp });
+                                      if (user.id !== task.responsibleId) {
+                                        onUpdate(task.id, { responsibleId: user.id });
                                       }
                                       setEditingField(null);
                                     }}
-                                    className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
+                                    className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
                                   >
-                                    {resp}
+                                    {user.avatar ? (
+                                      <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full" />
+                                    ) : (
+                                      <div className="w-6 h-6 rounded-full bg-emibytes-primary/20 flex items-center justify-center text-xs">
+                                        {user.name[0].toUpperCase()}
+                                      </div>
+                                    )}
+                                    <span>{user.name}</span>
+                                    <span className="text-xs opacity-60">@{user.username}</span>
                                   </button>
                                 ))}
                               </div>
@@ -302,7 +348,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                     onClick={() => {
                       if (editingField !== 'project') {
                         setEditingField('project');
-                        setTempProject(''); // Limpiar para mostrar todas las opciones
+                        setTempProject(''); // Limpiar para mostrar todos
                         setShowProjectDropdown(true);
                       }
                     }}
@@ -334,29 +380,36 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                 }
                               }}
                               autoFocus
-                              placeholder={task.project}
+                              placeholder="Buscar proyecto..."
                               className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                             />
                             {showProjectDropdown && filteredProjects.length > 0 && (
                               <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
-                                {filteredProjects.map((proj, idx) => (
+                                {filteredProjects.map((project) => (
                                   <button
-                                    key={idx}
+                                    key={project.id}
                                     type="button"
                                     onMouseDown={(e) => {
                                       e.preventDefault();
-                                      setTempProject(proj);
+                                      setTempProject(project.name);
                                       setShowProjectDropdown(false);
-                                      // Guardar inmediatamente con el nuevo valor
-                                      if (proj !== task.project) {
-                                        taskService.addProject(proj);
-                                        onUpdate(task.id, { project: proj });
+                                      if (project.name !== task.project) {
+                                        onUpdate(task.id, { project: project.name });
                                       }
                                       setEditingField(null);
                                     }}
-                                    className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
+                                    className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
                                   >
-                                    {proj}
+                                    <span className="flex-1">{project.name}</span>
+                                    {project.status === 'active' ? (
+                                      <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs font-bold">
+                                        Activo
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded text-xs font-bold">
+                                        Inactivo
+                                      </span>
+                                    )}
                                   </button>
                                 ))}
                               </div>
@@ -392,21 +445,37 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                       <div className="flex-1 min-w-0">
                         <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Inicio</p>
                         {editingField === 'startDate' ? (
-                          <input
-                            type="date"
-                            value={tempStartDate}
-                            onChange={(e) => setTempStartDate(e.target.value)}
-                            onBlur={() => handleSaveProperty('startDate')}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveProperty('startDate');
-                              if (e.key === 'Escape') handleCancelEdit('startDate');
+                          <Flatpickr
+                            value={tempStartDate || undefined}
+                            onChange={(dates) => {
+                              const newDate = dates[0] || null;
+                              setTempStartDate(newDate);
+                              const updates: Partial<Task> = {
+                                startDate: newDate ? newDate.getTime() : undefined
+                              };
+                              onUpdate(task.id, updates);
+                              setEditingField(null);
                             }}
-                            autoFocus
+                            options={{
+                              dateFormat: 'd/m/Y',
+                              allowInput: true,
+                              locale: {
+                                firstDayOfWeek: 1,
+                                weekdays: {
+                                  shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                                  longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+                                },
+                                months: {
+                                  shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                                  longhand: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                                }
+                              }
+                            }}
                             className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                           />
                         ) : (
                           <p className="text-sm font-bold group-hover:text-emibytes-primary transition-colors">
-                            {task.startDate ? new Date(task.startDate).toLocaleDateString() : 'Sin fecha'}
+                            {task.startDate ? new Date(task.startDate).toLocaleDateString('es-ES') : 'Sin fecha'}
                           </p>
                         )}
                       </div>
@@ -425,22 +494,38 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                       <div className="flex-1 min-w-0">
                         <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Fin</p>
                         {editingField === 'endDate' ? (
-                          <input
-                            type="date"
-                            value={tempEndDate}
-                            onChange={(e) => setTempEndDate(e.target.value)}
-                            onBlur={() => handleSaveProperty('endDate')}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveProperty('endDate');
-                              if (e.key === 'Escape') handleCancelEdit('endDate');
+                          <Flatpickr
+                            value={tempEndDate || undefined}
+                            onChange={(dates) => {
+                              const newDate = dates[0] || null;
+                              setTempEndDate(newDate);
+                              const updates: Partial<Task> = {
+                                endDate: newDate ? newDate.getTime() : undefined
+                              };
+                              onUpdate(task.id, updates);
+                              setEditingField(null);
                             }}
-                            autoFocus
-                            min={tempStartDate}
+                            options={{
+                              dateFormat: 'd/m/Y',
+                              allowInput: true,
+                              minDate: tempStartDate || undefined,
+                              locale: {
+                                firstDayOfWeek: 1,
+                                weekdays: {
+                                  shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                                  longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+                                },
+                                months: {
+                                  shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                                  longhand: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                                }
+                              }
+                            }}
                             className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                           />
                         ) : (
                           <p className="text-sm font-bold group-hover:text-emibytes-primary transition-colors">
-                            {task.endDate ? new Date(task.endDate).toLocaleDateString() : 'Sin fecha'}
+                            {task.endDate ? new Date(task.endDate).toLocaleDateString('es-ES') : 'Sin fecha'}
                           </p>
                         )}
                       </div>
@@ -515,7 +600,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                 onClick={() => {
                   if (editingField !== 'responsible') {
                     setEditingField('responsible');
-                    setTempResponsible(''); // Limpiar para mostrar todas las opciones
                     setShowResponsibleDropdown(true);
                   }
                 }}
@@ -547,33 +631,40 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                             }
                           }}
                           autoFocus
-                          placeholder={task.responsible}
+                          placeholder="Buscar usuario..."
                           className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                         />
-                        {showResponsibleDropdown && filteredResponsibles.length > 0 && (
+                        {showResponsibleDropdown && filteredUsers.length > 0 && (
                           <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
-                            {filteredResponsibles.map((resp, idx) => (
+                            {filteredUsers.map((user) => (
                               <button
-                                key={idx}
+                                key={user.id}
                                 type="button"
                                 onMouseDown={(e) => {
                                   e.preventDefault();
-                                  setTempResponsible(resp);
+                                  setTempResponsible(user.name);
                                   setShowResponsibleDropdown(false);
-                                  // Guardar inmediatamente con el nuevo valor
-                                  if (resp !== task.responsible) {
-                                    taskService.addResponsible(resp);
-                                    onUpdate(task.id, { responsible: resp });
+                                  if (user.id !== task.responsibleId) {
+                                    onUpdate(task.id, { responsibleId: user.id });
                                   }
                                   setEditingField(null);
                                 }}
-                                className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
+                                className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
                               >
-                                {resp}
+                                {user.avatar ? (
+                                  <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full" />
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full bg-emibytes-primary/20 flex items-center justify-center text-xs">
+                                    {user.name[0].toUpperCase()}
+                                  </div>
+                                )}
+                                <span>{user.name}</span>
+                                <span className="text-xs opacity-60">@{user.username}</span>
                               </button>
                             ))}
                           </div>
                         )}
+                        {loadingUsers && <p className="text-xs text-gray-400 mt-1">Cargando usuarios...</p>}
                       </div>
                     ) : (
                       <p className="text-sm font-bold group-hover:text-emibytes-primary transition-colors">{task.responsible}</p>
@@ -589,7 +680,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                 onClick={() => {
                   if (editingField !== 'project') {
                     setEditingField('project');
-                    setTempProject(''); // Limpiar para mostrar todas las opciones
+                    setTempProject(''); // Limpiar para mostrar todos
                     setShowProjectDropdown(true);
                   }
                 }}
@@ -621,33 +712,41 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                             }
                           }}
                           autoFocus
-                          placeholder={task.project}
+                          placeholder="Buscar proyecto..."
                           className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                         />
                         {showProjectDropdown && filteredProjects.length > 0 && (
                           <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
-                            {filteredProjects.map((proj, idx) => (
+                            {filteredProjects.map((project) => (
                               <button
-                                key={idx}
+                                key={project.id}
                                 type="button"
                                 onMouseDown={(e) => {
                                   e.preventDefault();
-                                  setTempProject(proj);
+                                  setTempProject(project.name);
                                   setShowProjectDropdown(false);
-                                  // Guardar inmediatamente con el nuevo valor
-                                  if (proj !== task.project) {
-                                    taskService.addProject(proj);
-                                    onUpdate(task.id, { project: proj });
+                                  if (project.name !== task.project) {
+                                    onUpdate(task.id, { project: project.name });
                                   }
                                   setEditingField(null);
                                 }}
-                                className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium"
+                                className="w-full text-left px-3 py-2 hover:bg-emibytes-primary hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
                               >
-                                {proj}
+                                <span className="flex-1">{project.name}</span>
+                                {project.status === 'active' ? (
+                                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs font-bold">
+                                    Activo
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded text-xs font-bold">
+                                    Inactivo
+                                  </span>
+                                )}
                               </button>
                             ))}
                           </div>
                         )}
+                        {loadingProjects && <p className="text-xs text-gray-400 mt-1">Cargando proyectos...</p>}
                       </div>
                     ) : (
                       <p className="text-sm font-bold group-hover:text-emibytes-primary transition-colors">{task.project}</p>
@@ -679,21 +778,37 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                   <div className="flex-1 min-w-0">
                     <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Inicio</p>
                     {editingField === 'startDate' ? (
-                      <input
-                        type="date"
-                        value={tempStartDate}
-                        onChange={(e) => setTempStartDate(e.target.value)}
-                        onBlur={() => handleSaveProperty('startDate')}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveProperty('startDate');
-                          if (e.key === 'Escape') handleCancelEdit('startDate');
+                      <Flatpickr
+                        value={tempStartDate || undefined}
+                        onChange={(dates) => {
+                          const newDate = dates[0] || null;
+                          setTempStartDate(newDate);
+                          const updates: Partial<Task> = {
+                            startDate: newDate ? newDate.getTime() : undefined
+                          };
+                          onUpdate(task.id, updates);
+                          setEditingField(null);
                         }}
-                        autoFocus
+                        options={{
+                          dateFormat: 'd/m/Y',
+                          allowInput: true,
+                          locale: {
+                            firstDayOfWeek: 1,
+                            weekdays: {
+                              shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                              longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+                            },
+                            months: {
+                              shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                              longhand: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                            }
+                          }
+                        }}
                         className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                       />
                     ) : (
                       <p className="text-sm font-bold group-hover:text-emibytes-primary transition-colors">
-                        {task.startDate ? new Date(task.startDate).toLocaleDateString() : 'Sin fecha'}
+                        {task.startDate ? new Date(task.startDate).toLocaleDateString('es-ES') : 'Sin fecha'}
                       </p>
                     )}
                   </div>
@@ -712,22 +827,38 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                   <div className="flex-1 min-w-0">
                     <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Fin</p>
                     {editingField === 'endDate' ? (
-                      <input
-                        type="date"
-                        value={tempEndDate}
-                        onChange={(e) => setTempEndDate(e.target.value)}
-                        onBlur={() => handleSaveProperty('endDate')}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveProperty('endDate');
-                          if (e.key === 'Escape') handleCancelEdit('endDate');
+                      <Flatpickr
+                        value={tempEndDate || undefined}
+                        onChange={(dates) => {
+                          const newDate = dates[0] || null;
+                          setTempEndDate(newDate);
+                          const updates: Partial<Task> = {
+                            endDate: newDate ? newDate.getTime() : undefined
+                          };
+                          onUpdate(task.id, updates);
+                          setEditingField(null);
                         }}
-                        autoFocus
-                        min={tempStartDate}
+                        options={{
+                          dateFormat: 'd/m/Y',
+                          allowInput: true,
+                          minDate: tempStartDate || undefined,
+                          locale: {
+                            firstDayOfWeek: 1,
+                            weekdays: {
+                              shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                              longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+                            },
+                            months: {
+                              shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                              longhand: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+                            }
+                          }
+                        }}
                         className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                       />
                     ) : (
                       <p className="text-sm font-bold group-hover:text-emibytes-primary transition-colors">
-                        {task.endDate ? new Date(task.endDate).toLocaleDateString() : 'Sin fecha'}
+                        {task.endDate ? new Date(task.endDate).toLocaleDateString('es-ES') : 'Sin fecha'}
                       </p>
                     )}
                   </div>

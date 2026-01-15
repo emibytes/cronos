@@ -80,7 +80,9 @@ const MainApp: React.FC = () => {
   const handleAddTask = useCallback(async (taskData: {
     title: string;
     responsible: string;
+    responsibleId?: number;
     project: string;
+    project_id?: number;
     observations: string;
     attachments: any[];
     startDate?: number;

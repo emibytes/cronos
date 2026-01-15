@@ -12,7 +12,15 @@ export interface Attachment {
 export interface Task {
   id: string;
   title: string;
-  responsible: string;
+  responsible: string; // Nombre del responsable (para mostrar)
+  responsibleId?: number; // ID del responsable (para enviar al backend)
+  responsibleUser?: {
+    id: number;
+    name: string;
+    email: string;
+    username: string;
+    avatar?: string;
+  };
   project: string; // Nombre del proyecto (para mostrar)
   project_id?: string; // ID del proyecto (para enviar al backend)
   observations: string;

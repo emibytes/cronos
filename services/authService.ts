@@ -12,7 +12,7 @@ interface User {
 }
 
 interface LoginCredentials {
-  email: string;
+  login: string;
   password: string;
 }
 
@@ -75,7 +75,7 @@ export const authService = {
       return new Promise((resolve) => {
         setTimeout(() => {
           const user = MOCK_USERS.find(
-            u => u.email === credentials.email && u.password === credentials.password
+            u => (u.email === credentials.login || u.name.toLowerCase() === credentials.login.toLowerCase()) && u.password === credentials.password
           );
 
           if (user) {

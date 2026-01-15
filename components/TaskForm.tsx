@@ -6,10 +6,11 @@ import 'react-quill-new/dist/quill.snow.css';
 import { Attachment } from '../types';
 import { taskService } from '../services/taskService';
 import { projectService, Project } from '../services/projectService';
+import { userService, User } from '../services/userService';
 
 interface TaskFormProps {
   onClose: () => void;
-  onSubmit: (task: { title: string; responsible: string; project: string; project_id: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
+  onSubmit: (task: { title: string; responsible: string; responsibleId?: number; project: string; project_id: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
 }
 
 interface FormErrors {
@@ -32,6 +33,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   
   const [title, setTitle] = useState('');
   const [responsible, setResponsible] = useState('');
+  const [responsibleId, setResponsibleId] = useState<number | undefined>();
   const [projectId, setProjectId] = useState('');
   const [projectName, setProjectName] = useState('');
   const [observations, setObservations] = useState('');
@@ -43,14 +45,38 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false);
-  const [availableResponsibles, setAvailableResponsibles] = useState<string[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const projectDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setAvailableResponsibles(taskService.getResponsibles());
+    // Cargar usuarios desde la API
+    const loadUsers = async () => {
+      setIsLoadingUsers(true);
+      try {
+        const users = await userService.getAllUsers();
+        
+        // Obtener usuario actual
+        const currentUser = JSON.parse(localStorage.getItem('emibytes_user_data') || '{}');
+        
+        // Ordenar usuarios: primero el usuario actual, luego los demás
+        const sortedUsers = users.sort((a, b) => {
+          if (a.id === currentUser.id) return -1;
+          if (b.id === currentUser.id) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
+        setAvailableUsers(sortedUsers);
+      } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+    loadUsers();
     
     // Cargar proyectos desde la API
     const loadProjects = async () => {
@@ -78,26 +104,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredResponsibles = useMemo(() => {
-    if (!responsible) return availableResponsibles;
-    return availableResponsibles.filter(r => 
-      r.toLowerCase().includes(responsible.toLowerCase())
+  const filteredUsers = useMemo(() => {
+    if (!responsible) return availableUsers;
+    return availableUsers.filter(u => 
+      u.name.toLowerCase().includes(responsible.toLowerCase())
     );
-  }, [responsible, availableResponsibles]);
-
-  const exactMatch = useMemo(() => {
-    return availableResponsibles.some(r => r.toLowerCase() === responsible.toLowerCase());
-  }, [responsible, availableResponsibles]);
+  }, [responsible, availableUsers]);
 
   const filteredProjects = useMemo(() => {
     if (!projectName) return availableProjects;
     return availableProjects.filter(p => 
       p.name.toLowerCase().includes(projectName.toLowerCase())
     );
-  }, [projectName, availableProjects]);
-
-  const exactProjectMatch = useMemo(() => {
-    return availableProjects.some(p => p.name.toLowerCase() === projectName.toLowerCase());
   }, [projectName, availableProjects]);
 
   const validate = (): boolean => {
@@ -115,6 +133,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
       onSubmit({
         title,
         responsible,
+        responsibleId,
         project: projectName,
         project_id: projectId,
         observations,
@@ -195,29 +214,40 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSubmit }) => {
 
               {isMenuOpen && (
                 <div className="absolute z-50 w-full mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-                  {filteredResponsibles.map((r, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setResponsible(r);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm flex items-center space-x-2 transition-colors font-bold"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emibytes-primary"></span>
-                      <span>{r}</span>
-                    </button>
-                  ))}
-                  {responsible && !exactMatch && (
-                    <button
-                      type="button"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="w-full text-left px-4 py-3 bg-emibytes-primary/5 dark:bg-emibytes-primary/10 hover:bg-emibytes-primary/10 text-emibytes-primary text-xs font-black flex items-center space-x-2 transition-colors border-t border-emibytes-primary/10 uppercase"
-                    >
-                      <UserPlus size={14} />
-                      <span>Nuevo: "{responsible}"</span>
-                    </button>
+                  {isLoadingUsers ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-400 border-t-transparent"></div>
+                      Cargando usuarios...
+                    </div>
+                  ) : filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => {
+                          setResponsible(user.name);
+                          setResponsibleId(user.id);
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm flex items-center gap-2 transition-colors font-bold"
+                      >
+                        {user.avatar ? (
+                          <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-emibytes-primary/20 flex items-center justify-center text-xs font-bold">
+                            {user.name[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <span>{user.name}</span>
+                          <span className="text-xs opacity-60 ml-2">@{user.username}</span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500">
+                      No se encontraron usuarios
+                    </div>
                   )}
                 </div>
               )}
