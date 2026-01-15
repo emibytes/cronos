@@ -10,7 +10,6 @@ declare global {
     env: {
       VITE_APP_MODE?: string;
       VITE_API_BASE_URL?: string;
-      VITE_API_PREFIX?: string;
       VITE_API_TOKEN?: string;
       VITE_API_TASKS_ENDPOINT?: string;
     };
@@ -21,7 +20,6 @@ declare global {
 const ENV_CONFIG = {
   mode: (import.meta.env.VITE_APP_MODE || 'local') as 'local' | 'production',
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://cronos.test/api',
-  apiPrefix: import.meta.env.VITE_API_PREFIX || '/admin',
   apiToken: import.meta.env.VITE_API_TOKEN || '',
   tasksEndpoint: import.meta.env.VITE_API_TASKS_ENDPOINT || '/tasks',
 };
@@ -63,11 +61,9 @@ interface PaginatedData<T> {
 
 class ApiService {
   private baseUrl: string;
-  private prefix: string;
 
   constructor() {
     this.baseUrl = ENV_CONFIG.apiBaseUrl;
-    this.prefix = ENV_CONFIG.apiPrefix;
   }
 
   // Obtener headers para las peticiones
@@ -83,7 +79,7 @@ class ApiService {
 
   // Construir URL completa
   private buildUrl(endpoint: string): string {
-    return `${this.baseUrl}${this.prefix}${endpoint}`;
+    return `${this.baseUrl}${endpoint}`;
   }
 
   // Manejo de errores de respuesta
@@ -116,7 +112,7 @@ class ApiService {
   }
 
   // GET - Obtener lista de recursos
-  async getList<T>(endpoint: string, params?: Record<string, string>): Promise<LaravelResponse<PaginatedData<T>>> {
+  async getList<T>(endpoint: string, params?: Record<string, string>): Promise<LaravelResponse<T>> {
     const url = new URL(this.buildUrl(endpoint));
     
     if (params) {
@@ -130,7 +126,7 @@ class ApiService {
       headers: this.getHeaders(),
     });
 
-    return this.handleResponse<PaginatedData<T>>(response);
+    return this.handleResponse<T>(response);
   }
 
   // GET - Obtener un recurso específico

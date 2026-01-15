@@ -24,6 +24,30 @@ interface ApiTask {
   updated_at: string;
 }
 
+// Interfaz de respuesta paginada de tareas (nueva estructura ApiResponse)
+interface TasksResponse {
+  tasks: ApiTask[];
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    per_page: number;
+    to: number;
+    total: number;
+  };
+}
+
+// Interfaz de respuesta de una sola tarea
+interface SingleTaskResponse {
+  task: ApiTask;
+}
+
 // Convertir de API a modelo local
 const apiTaskToTask = (apiTask: ApiTask): Task => ({
   id: apiTask.id,
@@ -122,11 +146,11 @@ const apiTaskService = {
   getTasks: async (): Promise<Task[]> => {
     try {
       const config = getApiConfig();
-      const response = await apiService.getList<ApiTask>(config.tasksEndpoint);
+      const response = await apiService.getList<TasksResponse>(config.tasksEndpoint);
       
-      if (response.success && response.data) {
-        // response.data es PaginatedData<ApiTask>, que tiene la propiedad 'data'
-        const tasksArray = response.data.data || [];
+      if (response.success && response.data && response.data.tasks) {
+        // response.data.tasks es el array de tareas con la nueva estructura ApiResponse
+        const tasksArray = response.data.tasks;
         return tasksArray.map(apiTaskToTask);
       }
       
@@ -142,9 +166,9 @@ const apiTaskService = {
       const config = getApiConfig();
       const apiData = taskToApiTask({ ...taskData, status: 'pendiente' });
       
-      const response = await apiService.create<{ task: ApiTask }>(config.tasksEndpoint, apiData);
+      const response = await apiService.create<SingleTaskResponse>(config.tasksEndpoint, apiData);
       
-      if (response.success && response.data.task) {
+      if (response.success && response.data && response.data.task) {
         return apiTaskToTask(response.data.task);
       }
       
@@ -160,7 +184,7 @@ const apiTaskService = {
       const config = getApiConfig();
       const apiData = taskToApiTask(updates);
       
-      await apiService.update<{ task: ApiTask }>(config.tasksEndpoint, taskId, apiData);
+      await apiService.update<SingleTaskResponse>(config.tasksEndpoint, taskId, apiData);
       return await apiTaskService.getTasks();
     } catch (error) {
       console.error('Error al actualizar tarea en API:', error);

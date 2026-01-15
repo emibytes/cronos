@@ -206,10 +206,18 @@ const ProjectList: React.FC<ProjectListProps> = ({ onEdit, onAdd }) => {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden"
                     style={{ backgroundColor: `${project.color}20` }}
                   >
-                    <Folder size={24} style={{ color: project.color }} />
+                    {project.logo ? (
+                      <img 
+                        src={project.logo} 
+                        alt={project.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Folder size={24} style={{ color: project.color }} />
+                    )}
                   </div>
                   <div>
                     <h3 className="font-black text-gray-900 dark:text-white">{project.name}</h3>
