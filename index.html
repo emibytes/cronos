@@ -83,6 +83,86 @@
         .ql-snow.ql-toolbar button.ql-active .ql-fill {
             fill: #138b52 !important;
         }
+        
+        /* SweetAlert2 Custom Sizing - Reducir 25% */
+        .swal2-popup {
+            width: 24em !important;  /* Reducido de 32em */
+            padding: 0.75em !important;  /* Reducido de 1em */
+            font-size: 0.75rem !important;  /* Reducido de 1rem */
+        }
+        .swal2-title {
+            font-size: 1.125rem !important;  /* Reducido de 1.5rem */
+            padding: 0.375em 0.75em 0 !important;
+        }
+        .swal2-html-container {
+            font-size: 0.875rem !important;  /* Reducido de ~1rem */
+            padding: 0.75em !important;
+        }
+        .swal2-icon {
+            width: 3.75em !important;  /* Reducido de 5em */
+            height: 3.75em !important;  /* Reducido de 5em */
+            margin: 1.125em auto 0.75em !important;
+            border-width: 0.25em !important;
+        }
+        .swal2-icon .swal2-icon-content {
+            font-size: 2.25em !important;
+        }
+        /* Ajustes para icono de éxito */
+        .swal2-icon.swal2-success {
+            border-color: #a5dc86 !important;
+        }
+        .swal2-icon.swal2-success .swal2-success-ring {
+            width: 3.75em !important;
+            height: 3.75em !important;
+            border: 0.25em solid rgba(165, 220, 134, 0.3) !important;
+            border-radius: 50% !important;
+            position: absolute !important;
+            left: -0.25em !important;
+            top: -0.25em !important;
+        }
+        .swal2-icon.swal2-success [class^='swal2-success-line'] {
+            display: block !important;
+            height: 0.3125em !important;
+            background-color: #a5dc86 !important;
+            border-radius: 0.125em !important;
+        }
+        .swal2-icon.swal2-success [class^='swal2-success-line'][class$='tip'] {
+            width: 0.9375em !important;
+            left: 0.5625em !important;
+            top: 1.75em !important;
+            transform: rotate(45deg) !important;
+        }
+        .swal2-icon.swal2-success [class^='swal2-success-line'][class$='long'] {
+            width: 1.875em !important;
+            right: 0.5em !important;
+            top: 1.375em !important;
+            transform: rotate(-45deg) !important;
+        }
+        .swal2-success-circular-line-left,
+        .swal2-success-circular-line-right,
+        .swal2-success-fix {
+            display: none !important;
+        }
+        /* Ajustes para icono de error */
+        .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+            display: block !important;
+            height: 0.3125em !important;
+            width: 2.25em !important;
+            background-color: #f27474 !important;
+            border-radius: 0.125em !important;
+        }
+        .swal2-actions {
+            padding: 0.375em !important;
+            gap: 0.5em !important;
+        }
+        .swal2-styled {
+            padding: 0.5em 1.5em !important;  /* Reducido de 0.625em 2em */
+            font-size: 0.875rem !important;
+        }
+        .swal2-input, .swal2-textarea {
+            font-size: 0.875rem !important;
+            padding: 0.5em !important;
+        }
     </style>
     <script>
         tailwind.config = {
