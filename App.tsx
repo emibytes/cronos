@@ -108,7 +108,11 @@ const MainApp: React.FC = () => {
       const updatedTasks = await Promise.resolve(taskService.updateTask(id, updates));
       setTasks(updatedTasks);
       if (selectedTask && selectedTask.id === id) {
-        setSelectedTask(prev => prev ? { ...prev, ...updates } : null);
+        // Buscar la tarea actualizada en el array para obtener todos los campos actualizados
+        const updatedTask = updatedTasks.find(t => t.id === id);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
       }
 
       Swal.fire({

@@ -41,6 +41,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
   const [tempProject, setTempProject] = useState(task.project);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempResponsible, setTempResponsible] = useState(task.responsible);
+
+  console.log('startDate: ', task.startDate);
+  console.log('endDate: ', task.endDate);
+
   const [tempEndDate, setTempEndDate] = useState<Date | null>(task.endDate ? new Date(task.endDate) : null);
   const [tempStartDate, setTempStartDate] = useState<Date | null>(task.startDate ? new Date(task.startDate) : null);
 
@@ -54,29 +58,34 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
 
   const responsibleRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
+  const hasFetchedData = useRef(false);
 
   // Cargar usuarios y proyectos del backend
   useEffect(() => {
+    // Evitar peticiones duplicadas en StrictMode
+    if (hasFetchedData.current) return;
+    hasFetchedData.current = true;
+
     const loadData = async () => {
       try {
         setLoadingUsers(true);
         setLoadingProjects(true);
-        
+
         const [users, projects] = await Promise.all([
           userService.getAllUsers(),
           projectService.getAllProjects()
         ]);
-        
+
         // Obtener usuario actual
         const currentUser = JSON.parse(localStorage.getItem('emibytes_user_data') || '{}');
-        
+
         // Ordenar usuarios: primero el usuario actual, luego los demás
         const sortedUsers = users.sort((a, b) => {
           if (a.id === currentUser.id) return -1;
           if (b.id === currentUser.id) return 1;
           return a.name.localeCompare(b.name);
         });
-        
+
         setAllUsers(sortedUsers);
         setAllProjects(projects);
       } catch (error) {
@@ -106,12 +115,12 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
   }, []);
 
   // Filtrar opciones basado en el input
-  const filteredUsers = tempResponsible.trim() === '' 
-    ? allUsers 
+  const filteredUsers = tempResponsible.trim() === ''
+    ? allUsers
     : allUsers.filter(u => u.name.toLowerCase().includes(tempResponsible.toLowerCase()));
 
-  const filteredProjects = tempProject.trim() === '' 
-    ? allProjects 
+  const filteredProjects = tempProject.trim() === ''
+    ? allProjects
     : allProjects.filter(p => p.name.toLowerCase().includes(tempProject.toLowerCase()));
 
   const handleSaveProperty = (field: string) => {
@@ -129,7 +138,11 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
         break;
       case 'project':
         if (tempProject !== task.project) {
-          updates.project = tempProject;
+          // Buscar el ID del proyecto seleccionado
+          const selectedProject = allProjects.find(p => p.name === tempProject);
+          if (selectedProject) {
+            updates.projectId = selectedProject.id;
+          }
         }
         break;
       case 'startDate':
@@ -304,7 +317,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                               className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                             />
                             {showResponsibleDropdown && filteredUsers.length > 0 && (
-                              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
+                              <div className="absolute top-full left-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50 min-w-[320px]">
                                 {filteredUsers.map((user) => (
                                   <button
                                     key={user.id}
@@ -327,8 +340,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                         {user.name[0].toUpperCase()}
                                       </div>
                                     )}
-                                    <span>{user.name}</span>
-                                    <span className="text-xs opacity-60">@{user.username}</span>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                      <span className="truncate">{user.name}</span>
+                                      <span className="text-xs opacity-60 truncate">@{user.username}</span>
+                                    </div>
                                   </button>
                                 ))}
                               </div>
@@ -394,7 +409,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                       setTempProject(project.name);
                                       setShowProjectDropdown(false);
                                       if (project.name !== task.project) {
-                                        onUpdate(task.id, { project: project.name });
+                                        onUpdate(task.id, { projectId: project.id });
                                       }
                                       setEditingField(null);
                                     }}
@@ -443,12 +458,29 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                         <Calendar size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Inicio</p>
-                        {editingField === 'startDate' ? (
-                          <Flatpickr
-                            value={tempStartDate || undefined}
+                    <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Inicio</p>
+                    {editingField === 'startDate' ? (
+                      <Flatpickr
+                        value={tempStartDate ? `${tempStartDate.getDate()}/${tempStartDate.getMonth() + 1}/${tempStartDate.getFullYear()}` : undefined}
                             onChange={(dates) => {
                               const newDate = dates[0] || null;
+                              console.log('📅 Fecha INICIO seleccionada (desktop):', newDate);
+                              console.log('  - toString():', newDate?.toString());
+                              console.log('  - toISOString():', newDate?.toISOString());
+                              console.log('  - getDate():', newDate?.getDate());
+                              console.log('  - getTime():', newDate?.getTime());
+
+                              // Validar que fecha inicio no sea mayor a fecha fin
+                              if (newDate && tempEndDate && newDate > tempEndDate) {
+                                Swal.fire({
+                                  icon: 'error',
+                                  title: 'Fecha inválida',
+                                  text: 'La fecha de inicio no puede ser mayor a la fecha de fin',
+                                  confirmButtonColor: '#0ea5e9'
+                                });
+                                return;
+                              }
+
                               setTempStartDate(newDate);
                               const updates: Partial<Task> = {
                                 startDate: newDate ? newDate.getTime() : undefined
@@ -459,6 +491,17 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                             options={{
                               dateFormat: 'd/m/Y',
                               allowInput: true,
+                              maxDate: tempEndDate || undefined,
+                              formatDate: (date, format, locale) => {
+                                return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                              },
+                              parseDate: (datestr, format) => {
+                                const parts = datestr.split('/');
+                                if (parts.length === 3) {
+                                  return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                                }
+                                return new Date(datestr);
+                              },
                               locale: {
                                 firstDayOfWeek: 1,
                                 weekdays: {
@@ -495,9 +538,26 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                         <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Fin</p>
                         {editingField === 'endDate' ? (
                           <Flatpickr
-                            value={tempEndDate || undefined}
+                            value={tempEndDate ? `${tempEndDate.getDate() + 1}/${tempEndDate.getMonth() + 1}/${tempEndDate.getFullYear()}` : undefined}
                             onChange={(dates) => {
                               const newDate = dates[0] || null;
+                              console.log('📅 Fecha FIN seleccionada (mobile):', newDate);
+                              console.log('  - toString():', newDate?.toString());
+                              console.log('  - toISOString():', newDate?.toISOString());
+                              console.log('  - getDate():', newDate?.getDate());
+                              console.log('  - getTime():', newDate?.getTime());
+
+                              // Validar que fecha fin no sea menor a fecha inicio
+                              if (newDate && tempStartDate && newDate < tempStartDate) {
+                                Swal.fire({
+                                  icon: 'error',
+                                  title: 'Fecha inválida',
+                                  text: 'La fecha de fin no puede ser menor a la fecha de inicio',
+                                  confirmButtonColor: '#0ea5e9'
+                                });
+                                return;
+                              }
+
                               setTempEndDate(newDate);
                               const updates: Partial<Task> = {
                                 endDate: newDate ? newDate.getTime() : undefined
@@ -509,6 +569,17 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                               dateFormat: 'd/m/Y',
                               allowInput: true,
                               minDate: tempStartDate || undefined,
+                              formatDate: (date, format, locale) => {
+                                return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                              },
+                              parseDate: (datestr, format) => {
+                                // Parsear sin conversión UTC
+                                const parts = datestr.split('/');
+                                if (parts.length === 3) {
+                                  return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                                }
+                                return new Date(datestr);
+                              },
                               locale: {
                                 firstDayOfWeek: 1,
                                 weekdays: {
@@ -635,7 +706,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                           className="w-full px-2 py-1 text-sm font-bold bg-white dark:bg-emibytes-dark-card border-2 border-emibytes-primary rounded-lg outline-none"
                         />
                         {showResponsibleDropdown && filteredUsers.length > 0 && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
+                          <div className="absolute top-full left-0 mt-1 bg-white dark:bg-emibytes-dark-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50 min-w-[320px]">
                             {filteredUsers.map((user) => (
                               <button
                                 key={user.id}
@@ -658,8 +729,10 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                     {user.name[0].toUpperCase()}
                                   </div>
                                 )}
-                                <span>{user.name}</span>
-                                <span className="text-xs opacity-60">@{user.username}</span>
+                                <div className="flex flex-col flex-1 min-w-0">
+                                  <span className="truncate">{user.name}</span>
+                                  <span className="text-xs opacity-60 truncate">@{user.username}</span>
+                                </div>
                               </button>
                             ))}
                           </div>
@@ -726,7 +799,7 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                                   setTempProject(project.name);
                                   setShowProjectDropdown(false);
                                   if (project.name !== task.project) {
-                                    onUpdate(task.id, { project: project.name });
+                                    onUpdate(task.id, { projectId: project.id });
                                   }
                                   setEditingField(null);
                                 }}
@@ -779,9 +852,26 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                     <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Inicio</p>
                     {editingField === 'startDate' ? (
                       <Flatpickr
-                        value={tempStartDate || undefined}
+                        value={tempStartDate ? `${tempStartDate.getDate()}/${tempStartDate.getMonth() + 1}/${tempStartDate.getFullYear()}` : undefined}
                         onChange={(dates) => {
                           const newDate = dates[0] || null;
+                          console.log('📅 Fecha INICIO seleccionada (mobile):', newDate);
+                          console.log('  - toString():', newDate?.toString());
+                          console.log('  - toISOString():', newDate?.toISOString());
+                          console.log('  - getDate():', newDate?.getDate());
+                          console.log('  - getTime():', newDate?.getTime());
+
+                          // Validar que fecha inicio no sea mayor a fecha fin
+                          if (newDate && tempEndDate && newDate > tempEndDate) {
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Fecha inválida',
+                              text: 'La fecha de inicio no puede ser mayor a la fecha de fin',
+                              confirmButtonColor: '#0ea5e9'
+                            });
+                            return;
+                          }
+
                           setTempStartDate(newDate);
                           const updates: Partial<Task> = {
                             startDate: newDate ? newDate.getTime() : undefined
@@ -792,6 +882,18 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                         options={{
                           dateFormat: 'd/m/Y',
                           allowInput: true,
+                          maxDate: tempEndDate || undefined,
+                          formatDate: (date, format, locale) => {
+                            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                          },
+                          parseDate: (datestr, format) => {
+                            // Parsear sin conversión UTC
+                            const parts = datestr.split('/');
+                            if (parts.length === 3) {
+                              return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                            }
+                            return new Date(datestr);
+                          },
                           locale: {
                             firstDayOfWeek: 1,
                             weekdays: {
@@ -828,9 +930,26 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                     <p className="text-[9px] text-gray-400 font-black uppercase mb-1">Fin</p>
                     {editingField === 'endDate' ? (
                       <Flatpickr
-                        value={tempEndDate || undefined}
+                        value={tempEndDate ? `${tempEndDate.getDate()}/${tempEndDate.getMonth() + 1}/${tempEndDate.getFullYear()}` : undefined}
                         onChange={(dates) => {
                           const newDate = dates[0] || null;
+                          console.log('📅 Fecha FIN seleccionada (desktop):', newDate);
+                          console.log('  - toString():', newDate?.toString());
+                          console.log('  - toISOString():', newDate?.toISOString());
+                          console.log('  - getDate():', newDate?.getDate());
+                          console.log('  - getTime():', newDate?.getTime());
+
+                          // Validar que fecha fin no sea menor a fecha inicio
+                          if (newDate && tempStartDate && newDate < tempStartDate) {
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Fecha inválida',
+                              text: 'La fecha de fin no puede ser menor a la fecha de inicio',
+                              confirmButtonColor: '#0ea5e9'
+                            });
+                            return;
+                          }
+
                           setTempEndDate(newDate);
                           const updates: Partial<Task> = {
                             endDate: newDate ? newDate.getTime() : undefined
@@ -842,6 +961,17 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
                           dateFormat: 'd/m/Y',
                           allowInput: true,
                           minDate: tempStartDate || undefined,
+                          formatDate: (date, format, locale) => {
+                            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                          },
+                          parseDate: (datestr, format) => {
+                            // Parsear sin conversión UTC
+                            const parts = datestr.split('/');
+                            if (parts.length === 3) {
+                              return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                            }
+                            return new Date(datestr);
+                          },
                           locale: {
                             firstDayOfWeek: 1,
                             weekdays: {
