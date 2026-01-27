@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, LayoutDashboard, ListTodo, Search, Kanban, CalendarDays, LogOut, FolderKanban } from 'lucide-react';
+import { Plus, LayoutDashboard, ListTodo, Search, Kanban, CalendarDays, LogOut, FolderKanban, Shield, Users, ChevronDown, Settings } from 'lucide-react';
 import Swal from 'sweetalert2';
 import Dashboard from './components/Dashboard';
 import TaskList from './components/TaskList';
@@ -11,6 +11,8 @@ import TaskForm from './components/TaskForm';
 import TaskDetail from './components/TaskDetail';
 import ProjectList from './components/ProjectList';
 import ProjectForm from './components/ProjectForm';
+import RoleManagement from './components/RoleManagement';
+import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import ResetPassword from './components/ResetPassword';
 import ThemeToggle from './components/ThemeToggle';
@@ -33,6 +35,7 @@ const MainApp: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
 
   console.log('🚀 MainApp montado - pathname:', location.pathname, 'isAuth:', isAuthenticated);
 
@@ -41,7 +44,9 @@ const MainApp: React.FC = () => {
     : location.pathname === '/calendar' ? 'calendar'
       : location.pathname === '/tasks' ? 'tasks'
         : location.pathname === '/projects' ? 'projects'
-        : 'dashboard';
+          : location.pathname === '/roles' ? 'roles'
+            : location.pathname === '/users' ? 'users'
+            : 'dashboard';
 
   useEffect(() => {
     // Verificar autenticación cada vez que cambia la ubicación
@@ -77,7 +82,7 @@ const MainApp: React.FC = () => {
     return () => observer.disconnect();
   }, [location.pathname]); // Verificar cada vez que cambia la ruta
 
-  const handleAddTask = useCallback(async (taskData: {
+  const handleAddTask = useCallback(async (taskData:  {
     title: string;
     responsible: string;
     responsibleId?: number;
@@ -254,12 +259,6 @@ const MainApp: React.FC = () => {
             label="Dashboard"
           />
           <NavItem
-            active={view === 'projects'}
-            onClick={() => navigate('/projects')}
-            icon={<FolderKanban size={20} />}
-            label="Proyectos"
-          />
-          <NavItem
             active={view === 'board'}
             onClick={() => navigate('/board')}
             icon={<Kanban size={20} />}
@@ -277,6 +276,52 @@ const MainApp: React.FC = () => {
             icon={<ListTodo size={20} />}
             label="Mis Tareas"
           />
+          
+          {/* Menú desplegable de Herramientas */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
+              className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl font-black transition-all uppercase text-[10px] tracking-[0.15em] ${
+                ['projects', 'roles', 'users'].includes(view)
+                  ? 'bg-emibytes-primary text-white shadow-xl shadow-emibytes-primary/30'
+                  : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-emibytes-secondary dark:hover:text-white'
+              }`}
+            >
+              <div className="flex items-center space-x-4">
+                <Settings size={20} />
+                <span>Herramientas</span>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`transform transition-transform duration-200 ${
+                  toolsMenuOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            
+            {toolsMenuOpen && (
+              <div className="ml-4 space-y-1 mt-1">
+                <SubNavItem
+                  active={view === 'projects'}
+                  onClick={() => navigate('/projects')}
+                  icon={<FolderKanban size={18} />}
+                  label="Proyectos"
+                />
+                <SubNavItem
+                  active={view === 'roles'}
+                  onClick={() => navigate('/roles')}
+                  icon={<Shield size={18} />}
+                  label="Roles"
+                />
+                <SubNavItem
+                  active={view === 'users'}
+                  onClick={() => navigate('/users')}
+                  icon={<Users size={18} />}
+                  label="Usuarios"
+                />
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="p-6 mt-auto space-y-4">
@@ -380,6 +425,10 @@ const MainApp: React.FC = () => {
               tasks={filteredTasks}
               onTaskClick={(task) => setSelectedTask(task)}
             />
+          ) : view === 'roles' ? (
+            <RoleManagement />
+          ) : view === 'users' ? (
+            <UserManagement />
           ) : (
             <TaskList
               tasks={filteredTasks}
@@ -489,6 +538,20 @@ const NavItem = ({ active, onClick, icon, label }: { active: boolean; onClick: (
   </button>
 );
 
+const SubNavItem = ({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-bold transition-all text-[10px] tracking-[0.1em] uppercase ${
+      active
+        ? 'bg-emibytes-primary/10 text-emibytes-primary dark:bg-emibytes-primary/20'
+        : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/30 hover:text-gray-600 dark:hover:text-gray-300'
+    }`}
+  >
+    {icon}
+    <span>{label}</span>
+  </button>
+);
+
 // Componente separado para la página de Login
 const LoginPage: React.FC = () => {
   const isAuth = authService.isAuthenticated();
@@ -520,6 +583,8 @@ const App: React.FC = () => {
         <Route path="/board" element={<MainApp />} />
         <Route path="/calendar" element={<MainApp />} />
         <Route path="/tasks" element={<MainApp />} />
+        <Route path="/roles" element={<MainApp />} />
+        <Route path="/users" element={<MainApp />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
