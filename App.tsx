@@ -242,7 +242,7 @@ const MainApp: React.FC = () => {
     <div className="flex min-h-screen bg-emibytes-background dark:bg-emibytes-dark-bg transition-colors duration-300">
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex w-64 bg-white dark:bg-emibytes-dark-card border-r border-gray-100 dark:border-gray-800 flex-col fixed inset-y-0 z-20 shadow-xl">
-        <div className="p-8 pb-6 flex justify-center items-center min-h-[120px]">
+        <div className="p-8 pb-6 flex justify-center items-center min-h-[120px] flex-shrink-0">
           <img
             src="/logo-dark.png"
             alt="emibytes logo"
@@ -251,7 +251,7 @@ const MainApp: React.FC = () => {
           />
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-6">
+        <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto overflow-x-hidden sidebar-nav">
           <NavItem
             active={view === 'dashboard'}
             onClick={() => navigate('/dashboard')}
@@ -324,7 +324,7 @@ const MainApp: React.FC = () => {
           </div>
         </nav>
 
-        <div className="p-6 mt-auto space-y-4">
+        <div className="p-6 space-y-4 flex-shrink-0 border-t border-gray-100 dark:border-gray-800">
           {/* Info de usuario */}
           <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-3">

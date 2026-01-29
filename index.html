@@ -46,6 +46,38 @@
             background: #3D3F43;
         }
         
+        /* Sidebar Navigation Scrollbar - más delgado y sutil */
+        nav.sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+        nav.sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 8px 0; /* Espacio arriba y abajo */
+        }
+        nav.sidebar-nav::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+        nav.sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+        }
+        .dark nav.sidebar-nav::-webkit-scrollbar-thumb {
+            background: #374151;
+        }
+        .dark nav.sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+        
+        /* Para navegadores Firefox */
+        nav.sidebar-nav {
+            scrollbar-width: thin;
+            scrollbar-color: #e2e8f0 transparent;
+        }
+        .dark nav.sidebar-nav {
+            scrollbar-color: #374151 transparent;
+        }
+        
         /* Customizing Quill for emibytes brand */
         .ql-toolbar.ql-snow {
             border-top-left-radius: 0.75rem;
