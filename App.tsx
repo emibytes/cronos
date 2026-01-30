@@ -13,6 +13,7 @@ import ProjectList from './components/ProjectList';
 import ProjectForm from './components/ProjectForm';
 import RoleManagement from './components/RoleManagement';
 import UserManagement from './components/UserManagement';
+import MenuManagement from './components/MenuManagement';
 import Login from './components/Login';
 import ResetPassword from './components/ResetPassword';
 import ThemeToggle from './components/ThemeToggle';
@@ -46,7 +47,8 @@ const MainApp: React.FC = () => {
         : location.pathname === '/projects' ? 'projects'
           : location.pathname === '/roles' ? 'roles'
             : location.pathname === '/users' ? 'users'
-            : 'dashboard';
+              : location.pathname === '/menus' ? 'menus'
+              : 'dashboard';
 
   useEffect(() => {
     // Verificar autenticación cada vez que cambia la ubicación
@@ -319,6 +321,12 @@ const MainApp: React.FC = () => {
                   icon={<Users size={18} />}
                   label="Usuarios"
                 />
+                <SubNavItem
+                  active={view === 'menus'}
+                  onClick={() => navigate('/menus')}
+                  icon={<Settings size={18} />}
+                  label="Menús"
+                />
               </div>
             )}
           </div>
@@ -429,6 +437,8 @@ const MainApp: React.FC = () => {
             <RoleManagement />
           ) : view === 'users' ? (
             <UserManagement />
+          ) : view === 'menus' ? (
+            <MenuManagement />
           ) : (
             <TaskList
               tasks={filteredTasks}
@@ -585,6 +595,7 @@ const App: React.FC = () => {
         <Route path="/tasks" element={<MainApp />} />
         <Route path="/roles" element={<MainApp />} />
         <Route path="/users" element={<MainApp />} />
+        <Route path="/menus" element={<MainApp />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

@@ -228,7 +228,7 @@ const UserList: React.FC<UserListProps> = ({ onEdit, onDelete, onAdd, onView, re
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Estado
               </th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -276,8 +276,8 @@ const UserList: React.FC<UserListProps> = ({ onEdit, onDelete, onAdd, onView, re
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(user.status)}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       {onView && (
                         <button
                           onClick={() => onView(user)}

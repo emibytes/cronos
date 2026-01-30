@@ -221,7 +221,7 @@ const RoleList: React.FC<RoleListProps> = ({ onEdit, onAdd, onView }) => {
                 <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Tipo
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
@@ -293,7 +293,7 @@ const RoleList: React.FC<RoleListProps> = ({ onEdit, onAdd, onView }) => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         {onView && (
                           <button
                             onClick={() => onView(role)}
