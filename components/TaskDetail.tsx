@@ -38,9 +38,9 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
   const [logoError, setLogoError] = useState(false);
 
   // Estados para edición inline de propiedades
-  const [tempProject, setTempProject] = useState(task.project);
+  const [tempProject, setTempProject] = useState(task.project || '');
   const [editingField, setEditingField] = useState<string | null>(null);
-  const [tempResponsible, setTempResponsible] = useState(task.responsible);
+  const [tempResponsible, setTempResponsible] = useState(task.responsible || '');
 
   console.log('startDate: ', task.startDate);
   console.log('endDate: ', task.endDate);
@@ -99,6 +99,16 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
     loadData();
   }, []);
 
+  // Sincronizar estados cuando cambia la tarea
+  useEffect(() => {
+    setTempProject(task.project || '');
+    setTempResponsible(task.responsible || '');
+    setTempObservations(task.observations || '');
+    setTempStatus(task.status);
+    setTempStartDate(task.startDate ? new Date(task.startDate) : null);
+    setTempEndDate(task.endDate ? new Date(task.endDate) : null);
+  }, [task]);
+
   // Cerrar dropdowns al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -115,11 +125,11 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onClose, onUpdate, onDele
   }, []);
 
   // Filtrar opciones basado en el input
-  const filteredUsers = tempResponsible.trim() === ''
+  const filteredUsers = !tempResponsible || tempResponsible.trim() === ''
     ? allUsers
     : allUsers.filter(u => u.name.toLowerCase().includes(tempResponsible.toLowerCase()));
 
-  const filteredProjects = tempProject.trim() === ''
+  const filteredProjects = !tempProject || tempProject.trim() === ''
     ? allProjects
     : allProjects.filter(p => p.name.toLowerCase().includes(tempProject.toLowerCase()));
 

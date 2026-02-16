@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Plus, LayoutDashboard, ListTodo, Search, Kanban, CalendarDays, LogOut, FolderKanban, Shield, Users, ChevronDown, Settings } from 'lucide-react';
+import { Plus, LayoutDashboard, ListTodo, Search, Kanban, CalendarDays, LogOut, FolderKanban, Shield, Users, ChevronDown, Settings, Menu, X } from 'lucide-react';
 import Swal from 'sweetalert2';
 import Dashboard from './components/Dashboard';
 import TaskList from './components/TaskList';
@@ -37,6 +37,7 @@ const MainApp: React.FC = () => {
   const [isDark, setIsDark] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   console.log('🚀 MainApp montado - pathname:', location.pathname, 'isAuth:', isAuthenticated);
 
@@ -89,7 +90,7 @@ const MainApp: React.FC = () => {
     responsible: string;
     responsibleId?: number;
     project: string;
-    project_id?: number;
+    project_id?: string;
     observations: string;
     attachments: any[];
     startDate?: number;
@@ -243,17 +244,19 @@ const MainApp: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-emibytes-background dark:bg-emibytes-dark-bg transition-colors duration-300">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-64 bg-white dark:bg-emibytes-dark-card border-r border-gray-100 dark:border-gray-800 flex-col fixed inset-y-0 z-20 shadow-xl">
-        <div className="p-8 pb-6 flex justify-center items-center min-h-[120px] flex-shrink-0">
+      <aside className={`hidden md:flex w-64 bg-white dark:bg-emibytes-dark-card border-r border-gray-100 dark:border-gray-800 flex-col fixed inset-y-0 z-20 shadow-xl transition-transform duration-300 ease-in-out ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="p-4 pb-3 flex justify-center items-center min-h-[80px] flex-shrink-0">
           <img
             src="/logo-dark.png"
             alt="emibytes logo"
-            className="h-16 w-auto object-contain block hover:scale-105 transition-transform"
-            style={{ minWidth: '160px' }}
+            className="h-12 w-auto object-contain block hover:scale-105 transition-transform"
+            style={{ minWidth: '140px' }}
           />
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-6 overflow-y-auto overflow-x-hidden sidebar-nav">
+        <nav className="flex-1 px-4 space-y-2 mt-2 overflow-y-auto overflow-x-hidden sidebar-nav">
           <NavItem
             active={view === 'dashboard'}
             onClick={() => navigate('/dashboard')}
@@ -332,38 +335,53 @@ const MainApp: React.FC = () => {
           </div>
         </nav>
 
-        <div className="p-6 space-y-4 flex-shrink-0 border-t border-gray-100 dark:border-gray-800">
+        <div className="p-3 space-y-2 flex-shrink-0 border-t border-gray-100 dark:border-gray-800">
           {/* Info de usuario */}
-          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-emibytes-primary rounded-full flex items-center justify-center text-white font-black text-sm">
+          <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-emibytes-primary rounded-full flex items-center justify-center text-white font-black text-xs">
                 {currentUser?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold truncate">{currentUser?.name || 'Usuario'}</p>
-                <p className="text-[10px] text-gray-400 truncate">{currentUser?.email || ''}</p>
+                <p className="text-xs font-bold truncate">{currentUser?.name || 'Usuario'}</p>
+                <p className="text-[9px] text-gray-400 truncate">{currentUser?.email || ''}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-bold text-xs uppercase hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg font-bold text-[10px] uppercase hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
             >
-              <LogOut size={14} />
+              <LogOut size={12} />
               Cerrar Sesión
             </button>
           </div>
 
-          <div className="bg-emibytes-primary/5 dark:bg-emibytes-primary/10 p-4 rounded-2xl border border-emibytes-primary/10 flex flex-col items-center">
-            <img src="/logo.png" className="w-10 h-10 mb-2 opacity-80" alt="emibytes circular" />
-            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Enterprise Edition</p>
+          <div className="hidden xl:flex bg-emibytes-primary/5 dark:bg-emibytes-primary/10 p-2 rounded-xl border border-emibytes-primary/10 flex-col items-center">
+            <img src="/logo.png" className="w-8 h-8 mb-1 opacity-80" alt="emibytes circular" />
+            <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Enterprise Edition</p>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 p-4 lg:p-10 pb-24 lg:pb-10 max-w-full overflow-x-hidden">
+      <main className={`flex-1 p-4 md:p-10 pb-24 md:pb-10 max-w-full overflow-x-hidden transition-all duration-300 ${
+        isSidebarOpen ? 'md:ml-64' : 'md:ml-0'
+      }`}>
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 max-w-full">
           <div className="flex items-center gap-5">
+            {/* Botón Toggle Sidebar */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="hidden md:flex items-center justify-center w-10 h-10 bg-white dark:bg-emibytes-dark-card rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 hover:bg-emibytes-primary/10 dark:hover:bg-emibytes-primary/20 transition-all hover:scale-105 active:scale-95"
+              title={isSidebarOpen ? 'Ocultar sidebar' : 'Mostrar sidebar'}
+            >
+              {isSidebarOpen ? (
+                <X size={20} className="text-gray-600 dark:text-gray-400" />
+              ) : (
+                <Menu size={20} className="text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+            
             <div className="bg-white dark:bg-emibytes-dark-card p-2 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800 hover:rotate-3 transition-all duration-500">
               <img
                 src="/logo.png"
@@ -450,7 +468,7 @@ const MainApp: React.FC = () => {
       </main>
 
       {/* Navegación Móvil */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 h-24 flex items-center justify-center pointer-events-none z-[80]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-24 flex items-center justify-center pointer-events-none z-[80]">
         <div className="bg-white/95 dark:bg-emibytes-dark-card/95 backdrop-blur-xl px-6 py-4 rounded-full border border-gray-100 dark:border-gray-800 shadow-2xl flex items-center space-x-6 pointer-events-auto">
           <button
             onClick={() => navigate('/dashboard')}

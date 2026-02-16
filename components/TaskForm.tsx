@@ -10,7 +10,7 @@ import { userService, User } from '../services/userService';
 
 interface TaskFormProps {
   onClose: () => void;
-  onSubmit: (task: { title: string; responsible: string; responsibleId?: number; project: string; project_id: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
+  onSubmit: (task: { title: string; responsible: string; responsibleId?: number; project: string; project_id?: string; observations: string; attachments: Attachment[]; startDate?: number; endDate?: number }) => void;
 }
 
 interface FormErrors {

@@ -53,7 +53,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ role, onClose, onSuccess }) => {
 
   const loadMenus = async () => {
     try {
-      const menus = await menuService.getMenus({ status: 'active' });
+      const menus = await menuService.getAllMenus({ status: 'active' });
       setAvailableMenus(menus);
     } catch (error) {
       console.error('Error loading menus:', error);

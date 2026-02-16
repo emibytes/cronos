@@ -66,7 +66,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSubmit, onClose }) => {
     try {
       setLoading(true);
       const [menusData, rolesData] = await Promise.all([
-        menuService.getMenus(),
+        menuService.getAllMenus({ status: 'active' }),
         roleService.getRoles({ per_page: 100 })
       ]);
       

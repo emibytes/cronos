@@ -91,7 +91,11 @@ const taskToApiTask = (task: Partial<Task>): any => {
   if (task.title) apiTask.title = task.title;
   if (task.responsibleId !== undefined)
     apiTask.responsible_id = task.responsibleId;
-  if (task.projectId !== undefined) apiTask.project_id = task.projectId;
+  
+  // Aceptar tanto projectId (camelCase) como project_id (snake_case)
+  const projectIdValue = (task as any).projectId ?? (task as any).project_id;
+  if (projectIdValue !== undefined) apiTask.project_id = projectIdValue;
+  
   if (task.observations !== undefined) apiTask.observations = task.observations;
   if (task.status) apiTask.status = task.status;
   

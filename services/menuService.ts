@@ -136,6 +136,49 @@ export const menuService = {
   },
 
   /**
+   * Get all menus without pagination (for forms, dropdowns, etc.)
+   */
+  async getAllMenus(params?: {
+    status?: 'active' | 'inactive';
+  }): Promise<Menu[]> {
+    const config = getMenuConfig();
+    const token = localStorage.getItem('emibytes_auth_token');
+
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+
+    const url = `${config.baseURL}${config.endpoints.list}/all?${queryParams.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.message || `Error fetching all menus: ${response.statusText}`
+      );
+    }
+
+    const result: ApiResponse<{ menus: Menu[] }> = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to fetch all menus');
+    }
+
+    return result.data.menus || [];
+  },
+
+  /**
    * Get a single menu by ID
    */
   async getMenu(id: number | string): Promise<Menu> {
