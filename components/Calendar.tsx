@@ -1,8 +1,10 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Task, TaskStatus } from '../types';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search, ChevronDown, X } from 'lucide-react';
 import { taskService } from '../services/taskService';
+import { userService } from '../services/userService';
+import { projectService } from '../services/projectService';
 
 interface CalendarProps {
   tasks: Task[];
@@ -67,14 +69,43 @@ const Calendar: React.FC<CalendarProps> = ({ tasks, onTaskClick }) => {
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   
-  // Obtener listas únicas
-  const allResponsibles = useMemo(() => taskService.getResponsibles(), []);
-  const allProjects = useMemo(() => taskService.getProjects(), []);
+  // Obtener listas únicas (API cuando sea posible; fallback a localStorage)
+  const [allResponsibles, setAllResponsibles] = useState<string[]>(() => taskService.getResponsibles());
+  const [allProjects, setAllProjects] = useState<string[]>(() => taskService.getProjects());
+
   const allStatuses: { value: TaskStatus; label: string }[] = [
     { value: 'pendiente', label: 'Pendiente' },
     { value: 'en_proceso', label: 'En Proceso' },
     { value: 'completada', label: 'Completada' },
   ];
+
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      // Cargar usuarios desde API; si falla, mantener responsables locales
+      try {
+        const users = await userService.getAllUsers();
+        if (!mounted) return;
+        const names = users.map(u => u.name).filter(Boolean).sort((a,b) => a.localeCompare(b));
+        setAllResponsibles(names);
+      } catch (error) {
+        // fallback: taskService.getResponsibles() ya inicializó la lista
+      }
+
+      // Cargar proyectos desde API; si falla, mantener proyectos locales
+      try {
+        const projects = await projectService.getActiveProjects();
+        if (!mounted) return;
+        const names = projects.map(p => p.name).filter(Boolean).sort((a,b) => a.localeCompare(b));
+        setAllProjects(names);
+      } catch (error) {
+        // fallback: taskService.getProjects() ya inicializó la lista
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []);
 
   const daysInMonth = useMemo(() => {
     const year = currentDate.getFullYear();

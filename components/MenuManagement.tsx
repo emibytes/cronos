@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MenuList from './MenuList';
 import MenuForm from './MenuForm';
 import MenuViewModal from './MenuViewModal';
+import ReorderMenuModal from './ReorderMenuModal';
 import { Menu, menuService } from '../services/menuService';
 import Swal from 'sweetalert2';
 
@@ -9,6 +10,7 @@ const MenuManagement: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState<Menu | null>(null);
   const [viewMenu, setViewMenu] = useState<Menu | null>(null);
+  const [showReorder, setShowReorder] = useState(false);
   const [listKey, setListKey] = useState(0);
 
   const handleAdd = () => {
@@ -132,6 +134,18 @@ const MenuManagement: React.FC = () => {
 
   return (
     <>
+      <div className="flex items-center justify-between mb-4">
+        <div />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowReorder(true)}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50"
+          >
+            Ordenar Menús
+          </button>
+        </div>
+      </div>
+
       <MenuList
         onEdit={handleEdit}
         onView={handleView}
@@ -152,6 +166,13 @@ const MenuManagement: React.FC = () => {
         <MenuViewModal
           menu={viewMenu}
           onClose={() => setViewMenu(null)}
+        />
+      )}
+
+      {showReorder && (
+        <ReorderMenuModal
+          onClose={() => setShowReorder(false)}
+          onSaved={() => setListKey((prev) => prev + 1)}
         />
       )}
     </>
